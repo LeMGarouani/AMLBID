@@ -126,6 +126,8 @@ AMLBID.fit(X_train, Y_train)
 Explainer = AMLBID_Explainer.explain(AMLBID,Config, X_test, Y_test)
 Explainer.run(port=8889)
 ```
+Demonstration of the explanatory artifact:
+
 ![https://github.com/LeMGarouani/AMLBID/blob/main/media/Demo.gif](https://github.com/LeMGarouani/AMLBID/blob/main/media/Demo.gif)
 
 ---
