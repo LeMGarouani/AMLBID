@@ -1,6 +1,6 @@
 # Transparent and Auto-explainable AutoML
 <p align="center">
-  <img src="https://github.com/LeMGarouani/AMLBID/blob/main/media/framework.png" width="100%" />
+  <img src="https://github.com/LeMGarouani/AMLBID/blob/main/media/Framework.png" width="100%" />
 </p>
 
 ---
