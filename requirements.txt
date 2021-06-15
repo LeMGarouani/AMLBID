@@ -1,0 +1,15 @@
+dash>=1.19
+dash-bootstrap-components
+jupyter_dash
+dash-auth
+dtreeviz>=1.3
+numpy
+pandas>=1.1
+scikit-learn
+shap>=0.37
+joblib
+oyaml
+click
+waitress
+flask_simplelogin
+scikit-learn
