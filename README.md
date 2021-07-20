@@ -70,8 +70,8 @@ pip install -r requirements.txt
 Below is a minimal working example of the `Recommender`mode .
 
 ```python
-from AMLBID.recommender import AMLBID_Recommender
-from AMLBID.explainer import AMLBID_Explainer
+from AMLBID.Recommender import AMLBID_Recommender
+from AMLBID.Explainer import AMLBID_Explainer
 from AMLBID.loader import *
 
 Data,X_train,Y_train,X_test,Y_test=load_data("Evaluation/Dataset.csv")
@@ -115,8 +115,8 @@ print(' Pipeline test accuracy:  %.3f' % score)
 
 Below is a minimal working example of the `Recommender_Explainer` mode.
 ```python
-from AMLBID.recommender import AMLBID_Recommender
-from AMLBID.explainer import AMLBID_Explainer
+from AMLBID.Recommender import AMLBID_Recommender
+from AMLBID.Explainer import AMLBID_Explainer
 from AMLBID.loader import *
 
 Data,X_train,Y_train,X_test,Y_test=load_data("Evaluation/Dataset.csv")
