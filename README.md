@@ -62,6 +62,8 @@ pip install -r requirements.txt
 
 
 ## Examples of use
+A working example is deployed at: [AMLBID](https://colab.research.google.com/drive/1zpMdccwRsoWe8dmksp_awY5qBgkVwsHd?usp=sharing)
+
 #### <ins>Mode `Recommender`</ins>:
 
 Below is a minimal working example of the `Recommender`mode .
