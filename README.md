@@ -53,10 +53,7 @@ It has two built-in modes of work:
 Curently,supports 08 <a href = "https://scikit-learn.org/stable/"> Scikit-Learn </a> classification algorithms, `AdaBoost`, `Support Vector Classifier`, `Extra Trees`, `Gradient Boosting`, `Decision Tree`, `Logistic Regression`, `Random Forest`, and `Stochastic Gradient Descent Classifier`. 
 
 ## Requirements
-- scikit-learn
-- dash
-- dtreeviz
-- shap
+- [dtreeviz](https://www-lisic.univ-littoral.fr/) See https://github.com/parrt/dtreeviz for info on how to properly install graphviz for dtreeviz.
 
 ```python
 # Install additional Python requirements
@@ -74,14 +71,15 @@ from AMLBID.Recommender import AMLBID_Recommender
 from AMLBID.Explainer import AMLBID_Explainer
 from AMLBID.loader import *
 
-Data,X_train,Y_train,X_test,Y_test=load_data("Evaluation/Dataset.csv")
+#load dataset
+Data,X_train,Y_train,X_test,Y_test=load_data("TestData.csv")
 
+#Generate the optimal configuration according to a desired predictive metric
 AMLBID=AMLBID_Recommender.recommend(Data, metric="Accuracy", mode="Recommender")
 AMLBID.fit(X_train, Y_train)
-print(AMLBID.score(X_test, Y_test))
-AMLBID.export('Recommended_pipeline.py')
+print("obtained score:" ,colored(round(AMLBID.score(X_test, Y_test)*100,3), 'green', attrs=['bold']))
 ```
-The corresponding Python code should be exported to the `Recommended_pipeline.py` file and look similar to the following:<br/>
+The corresponding Python code of the recommended pipeline should be exported to the `Recommended_pipeline.py` file and look similar to the following:<br/>
 *Note that the packages import code is generated automatically and dynamically according to the recommended ML pipeline.*
 
 ```python
@@ -119,12 +117,16 @@ from AMLBID.Recommender import AMLBID_Recommender
 from AMLBID.Explainer import AMLBID_Explainer
 from AMLBID.loader import *
 
-Data,X_train,Y_train,X_test,Y_test=load_data("Evaluation/Dataset.csv")
+#load dataset
+Data,X_train,Y_train,X_test,Y_test=load_data("TestData.csv")
 
+#Generate the optimal configurations according to a desired predictive metric
 AMLBID,Config=AMLBID_Recommender.recommend(Data, metric="Accuracy", mode="Recommender_Explainer")
 AMLBID.fit(X_train, Y_train)
+
+#Generate the interactive explanatory dash
 Explainer = AMLBID_Explainer.explain(AMLBID,Config, X_test, Y_test)
-Explainer.run(port=8889)
+Explainer.run()
 ```
 Demonstration of the explanatory artifact:
 
