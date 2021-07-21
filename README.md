@@ -53,7 +53,7 @@ It has two built-in modes of work:
 Curently,supports 08 <a href = "https://scikit-learn.org/stable/"> Scikit-Learn </a> classification algorithms, `AdaBoost`, `Support Vector Classifier`, `Extra Trees`, `Gradient Boosting`, `Decision Tree`, `Logistic Regression`, `Random Forest`, and `Stochastic Gradient Descent Classifier`. 
 
 ## Requirements
-- [dtreeviz](https://www-lisic.univ-littoral.fr/)  *(See https://github.com/parrt/dtreeviz for info on how to properly install graphviz for dtreeviz)*.
+- [dtreeviz](https://github.com/parrt/dtreeviz)  *(See https://github.com/parrt/dtreeviz for info on how to properly install graphviz for dtreeviz)*.
 
 ```python
 # Install additional Python requirements
