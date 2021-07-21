@@ -53,7 +53,7 @@ It has two built-in modes of work:
 Curently,supports 08 <a href = "https://scikit-learn.org/stable/"> Scikit-Learn </a> classification algorithms, `AdaBoost`, `Support Vector Classifier`, `Extra Trees`, `Gradient Boosting`, `Decision Tree`, `Logistic Regression`, `Random Forest`, and `Stochastic Gradient Descent Classifier`. 
 
 ## Requirements
-- [dtreeviz](https://www-lisic.univ-littoral.fr/) See https://github.com/parrt/dtreeviz for info on how to properly install graphviz for dtreeviz.
+- [dtreeviz](https://www-lisic.univ-littoral.fr/)  *(See https://github.com/parrt/dtreeviz for info on how to properly install graphviz for dtreeviz)*.
 
 ```python
 # Install additional Python requirements
@@ -77,7 +77,7 @@ Data,X_train,Y_train,X_test,Y_test=load_data("TestData.csv")
 #Generate the optimal configuration according to a desired predictive metric
 AMLBID=AMLBID_Recommender.recommend(Data, metric="Accuracy", mode="Recommender")
 AMLBID.fit(X_train, Y_train)
-print("obtained score:" ,colored(round(AMLBID.score(X_test, Y_test)*100,3), 'green', attrs=['bold']))
+print("obtained score:", AMLBID.score(X_test, Y_test))
 ```
 The corresponding Python code of the recommended pipeline should be exported to the `Recommended_pipeline.py` file and look similar to the following:<br/>
 *Note that the packages import code is generated automatically and dynamically according to the recommended ML pipeline.*
