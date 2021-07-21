@@ -829,7 +829,7 @@ class Testcomposite(ExplainerComponent):
                            
                                 
                                     ],style={"text-align": "justify"}),
-                        dbc.CardFooter([dbc.CardLink("Learn more>>", href=md.Ref.to_list()[0], style={"float": "right"})]),
+                        dbc.CardFooter([dbc.CardLink("Learn more>>", href=md.Ref.to_list()[0], target="_blank", style={"float": "right"})]),
                             ]),
                         html.Br(),                            
                         ], width=6),
