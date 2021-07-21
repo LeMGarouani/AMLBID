@@ -13,3 +13,7 @@ click
 waitress
 flask_simplelogin
 scikit-learn
+xgboost
+termcolor
+pdpbox
+shortuuid
