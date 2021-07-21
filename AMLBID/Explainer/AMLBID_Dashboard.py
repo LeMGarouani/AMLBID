@@ -291,6 +291,7 @@ class ExplainerDashboard:
                  shap_dependence=False,
                  shap_interaction=False,
                  decision_trees=True,
+                 debug=False,
                  
                  
                  
@@ -827,11 +828,11 @@ class ExplainerDashboard:
             if not self.is_colab:
                 #print(f"Starting ExplainerDashboard on http://localhost:{port}\n", flush=True)
                 pass
-            self.app.run_server(port=port, mode=self.mode, **kwargs)
+            self.app.run_server(port=port,debug=False, mode=self.mode, **kwargs)
         elif self.mode in ['inline', 'jupyterlab']:
             print(f"Starting ExplainerDashboard inline (terminate it with "
                   f"ExplainerDashboard.terminate({port}))", flush=True)
-            self.app.run_server(port=port, mode=self.mode, 
+            self.app.run_server(port=port, mode=self.mode,debug=False, 
                                 width=self.width, height=self.height, **kwargs)
         else:
             raise ValueError(f"Unknown mode: {mode}...")
