@@ -1,3 +1,4 @@
+imgaug==0.2.6
 dash>=1.19
 dash-bootstrap-components
 jupyter_dash
