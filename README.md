@@ -67,7 +67,7 @@ Most of the necessary Python packages can be installed via the PyPi packages ind
 # Install additional Python requirements
 pip install -r requirements.txt
 ```
-Finally to install AMBI itself along with required dependencies, run the following command:
+Finally to install AMLBID itself along with required dependencies, run the following command:
 ```python
 # Install additional Python requirements
 pip install AMLBID
