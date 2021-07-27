@@ -1,3 +1,5 @@
+![https://pypi.python.org/pypi/explainerdashboard/](https://img.shields.io/pypi/v/AMLBID.svg)
+
 # Transparent and Auto-explainable AutoML
 <p align="center">
   <img src="https://github.com/LeMGarouani/AMLBID/blob/main/media/Framework.png" width="100%" />
