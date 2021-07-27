@@ -52,15 +52,25 @@ It has two built-in modes of work:
 
 Curently,supports 08 <a href = "https://scikit-learn.org/stable/"> Scikit-Learn </a> classification algorithms, `AdaBoost`, `Support Vector Classifier`, `Extra Trees`, `Gradient Boosting`, `Decision Tree`, `Logistic Regression`, `Random Forest`, and `Stochastic Gradient Descent Classifier`. 
 
-## Requirements
-- [dtreeviz](https://github.com/parrt/dtreeviz)  *(See https://github.com/parrt/dtreeviz for info on how to properly install graphviz for dtreeviz)*.
+## Installation
+AMLBID is built on top of several existing Python libraries, including:
+* numpy
+* shap
+* jupyter_dash
+* xgboost
+* [dtreeviz](https://github.com/parrt/dtreeviz) **Windows users:** *See https://github.com/parrt/dtreeviz for info on how to properly install dtreeviz*.
+* ...
+Most of the necessary Python packages can be installed via the PyPi packages index or Anaconda Python distribution.
 
 ```python
 # Install additional Python requirements
 pip install -r requirements.txt
 ```
-
-
+Finally to install AMBI itself along with required dependencies, run the following command:
+```python
+# Install additional Python requirements
+pip install AMLBID
+```
 ## Examples of use
 A working example is deployed in: [AMLBID](https://colab.research.google.com/drive/1zpMdccwRsoWe8dmksp_awY5qBgkVwsHd?usp=sharing)
 
