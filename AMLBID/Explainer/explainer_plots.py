@@ -1207,7 +1207,7 @@ def plotly_confusion_matrix(y_true, y_preds, labels = None, percentage=True):
                         x=[f'predicted {lab}' if len(lab) < 5 else f'predicted<br>{lab}' for lab in labels],
                         y=[f'actual {lab}' if len(lab) < 5 else f'actual<br>{lab}' for lab in labels],
                         hoverinfo="skip",
-                        zmin=0, zmax=zmax, colorscale='Blues',
+                        zmin=0, zmax=zmax, colorscale= [[0, 'rgb(166,206,227)'], [0.30, 'rgb(118, 186, 222)'], [0.65, 'rgb(93, 189, 240)'], [0.80, 'rgb(77, 183, 240)'],[1,'rgb(62, 176, 237)']],
                         showscale=False,
                     )]
     layout = go.Layout(
