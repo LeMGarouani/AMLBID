@@ -23,12 +23,6 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
 
 * Automatically select ML algorithms and hyperparameters configurations for a given machine-learning problem more quickly than current methods with a **computational complexity near O(1)**.
 
-* The first system that automatically and efficiently select ML pipeline and providing the **rational** of the provided suggestion. Existing AutoML tools cannot do this.
-
-* The framework is equipped with an **explanation artifact** which allows the end-user to understand and diagnose the design of the returned machine learning models using various explanation techniques. In particular, the explanation artifact allows the end-user to:
-    * Investigate of the reasoning behind the AutoML recommendation generation process. 
-    * Explore the predictions of any recommendation in a faithful way, through linked visual summary - textual informations for a higher trust.
-
 * Provide a multi-level interactive visualization artifact that facilitate the models workings and performance **inspection** to address the **“black-box trusting”**.
 
 * Provide a **guidance**, when AutoML returns *unsatisfying* results, to improve to predictive performances by assessing the importance of an algorithm hyperparameters.
