@@ -15,7 +15,7 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
  
 * The framework provides  end-users *(Industry 4.0 actors & Researchers)* with a user-friendly *control panel* that allows nontechnical users and domain experts (e.g., physicians, researchers) to overcome machine-learning predictive models building and configuring process challenges according to their own preferences.
 
-* The first framework system that automate machine-learning predictive models building and configuration for big industrial data. The tool will enable manufacturing actors and researchers to rapidly ask a series of what-if scenarios when probing opportunities to use predictive models to improve outcomes and reduce costs for various tasks as well as the need of classical collaborations. 
+* The first framework system that automate machine-learning predictive models building and configuration for big industrial data.
 
 * The framework is equipped with a **recommendation engine**, that provide suggestion of the most appropriate pipelines *(classifiers with their hyperparameters configuration)* through the use of a collaborative **knowledge-base** that grows by time as more users are using our tool.
 
