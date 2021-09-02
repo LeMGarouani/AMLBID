@@ -25,9 +25,6 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
 
 * Provide a multi-level interactive visualization artifact that facilitate the models workings and performance **inspection** to address the **“black-box trusting”**.
 
-* Provide a **guidance**, when AutoML returns *unsatisfying* results, to improve to predictive performances by assessing the importance of an algorithm hyperparameters.
-
-
 <p align="center">
 <img alt="--" src="https://github.com/LeMGarouani/AMLBID/blob/main/media/AMLBID.png" width="80%" />
 </p>
