@@ -441,8 +441,8 @@ def extract_data_metafeatures(file):
 
     # data imputation for categorical features
     categ_data = data[categorical_cols]
-    
-    data[categorical_cols] = categ_data.fillna(categ_data.mode().iloc[0])
+    if len(categorical_cols)!=0:
+        data[categorical_cols] = categ_data.fillna(categ_data.mode().iloc[0])
     
        
     metafeatures1 = meta_features(data, num_cols, categorical_cols)
