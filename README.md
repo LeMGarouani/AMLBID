@@ -138,4 +138,79 @@ Demonstration of the explanatory artifact:
 
 ![https://github.com/LeMGarouani/AMLBID/blob/main/media/Demo.gif](https://github.com/LeMGarouani/AMLBID/blob/main/media/Demo.gif)
 ---
+
+## Citing AMLBID
+
+If you use the AMLBID in a scientific publication, please consider citing at least one of the following papers:
+
+* **M. Garouani, A. Ahmad, M. Bouneffa, M. Hamlich, AMLBID: An auto-explained automated machine learning tool for big industrial data, SoftwareX 17 (2022) 100919. Doi: https://doi.org/10.1016/j.softx.2021.100919**
+
+```bibtex
+@article{Garouani2022,
+  doi = {10.1016/j.softx.2021.100919},
+  url = {https://doi.org/10.1016/j.softx.2021.100919},
+  year = {2022},
+  month = jan,
+  publisher = {Elsevier {BV}},
+  volume = {17},
+  pages = {100919},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich},
+  title = {{AMLBID}: An auto-explained Automated Machine Learning tool for Big Industrial Data},
+  journal = {{SoftwareX}}
+}
+```
+
+* **Garouani, M., Ahmad, A., Bouneffa, M. et al. Towards big industrial data mining through explainable automated machine learning. Int J Adv Manuf Technol 120, 1169–1188 (2022). https://doi.org/10.1007/s00170-022-08761-9 **
+
+```bibtex
+@article{Garouani2022a,
+  doi = {10.1007/s00170-022-08761-9},
+  url = {https://doi.org/10.1007/s00170-022-08761-9},
+  year = {2022},
+  month = feb,
+  publisher = {Springer Science and Business Media {LLC}},
+  volume = {120},
+  number = {1-2},
+  pages = {1169--1188},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich and Gregory Bourguin and Arnaud Lewandowski},
+  title = {Towards big industrial data mining through explainable automated machine learning},
+  journal = {The International Journal of Advanced Manufacturing Technology}
+}
+
+```
+
+* **Garouani, M., Ahmad, A., Bouneffa, M. et al. Using meta-learning for automated algorithms selection and configuration: an experimental framework for industrial big data. J Big Data 9, 57 (2022). https://doi.org/10.1186/s40537-022-00612-4**
+
+```bibtex
+@article{Garouani2022b,
+  doi = {10.1186/s40537-022-00612-4},
+  url = {https://doi.org/10.1186/s40537-022-00612-4},
+  year = {2022},
+  month = apr,
+  publisher = {Springer Science and Business Media {LLC}},
+  volume = {9},
+  number = {1},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich and Gregory Bourguin and Arnaud Lewandowski},
+  title = {Using meta-learning for automated algorithms selection and configuration: an experimental framework for industrial big data},
+  journal = {Journal of Big Data}
+}
+
+```
+
+* **Garouani, M.; Ahmad, A.; Bouneffa, M.; Lewandowski, A.; Bourguin, G. and Hamlich, M. (2021). Towards the Automation of Industrial Data Science: A Meta-learning based Approach. In Proceedings of the 23rd International Conference on Enterprise Information Systems - Volume 1: ICEIS, ISBN 978-989-758-509-8; ISSN 2184-4992, pages 709-716. https://doi.org/10.5220/0010457107090716**
+
+```bibtex
+@inproceedings{Garouani2021,
+  doi = {10.5220/0010457107090716},
+  url = {https://doi.org/10.5220/0010457107090716},
+  year = {2021},
+  publisher = {{SCITEPRESS} - Science and Technology Publications},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Arnaud Lewandowski and Gregory Bourguin and Mohamed Hamlich},
+  title = {Towards the Automation of Industrial Data Science: A Meta-learning based Approach},
+  booktitle = {Proceedings of the 23rd International Conference on Enterprise Information Systems}
+}
+
+```
+
+
 **AMLBID** was developed in the [LISIC Lab](https://www-lisic.univ-littoral.fr/) at the [ULCO University](https://www.univ-littoral.fr/) with funding from the [ULCO](https://www.univ-littoral.fr/), [HESTIM](https://www.hestim.ma/), and [CNRST](https://cnrst.ma/index.php/fr/).
