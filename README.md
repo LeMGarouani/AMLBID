@@ -160,7 +160,7 @@ If you use the AMLBID in a scientific publication, please consider citing at lea
 }
 ```
 
-* **Garouani, M., Ahmad, A., Bouneffa, M. et al. Towards big industrial data mining through explainable automated machine learning. Int J Adv Manuf Technol 120, 1169–1188 (2022). https://doi.org/10.1007/s00170-022-08761-9 **
+* **Garouani, M., Ahmad, A., Bouneffa, M. et al. Towards big industrial data mining through explainable automated machine learning. Int J Adv Manuf Technol 120, 1169–1188 (2022). https://doi.org/10.1007/s00170-022-08761-9**
 
 ```bibtex
 @article{Garouani2022a,
@@ -197,7 +197,7 @@ If you use the AMLBID in a scientific publication, please consider citing at lea
 
 ```
 
-* **Garouani, M.; Ahmad, A.; Bouneffa, M.; Lewandowski, A.; Bourguin, G. and Hamlich, M. (2021). Towards the Automation of Industrial Data Science: A Meta-learning based Approach. In Proceedings of the 23rd International Conference on Enterprise Information Systems - Volume 1: ICEIS, ISBN 978-989-758-509-8; ISSN 2184-4992, pages 709-716. https://doi.org/10.5220/0010457107090716**
+* **Garouani, M.; Ahmad, A.; Bouneffa, M.; Lewandowski, A.; Bourguin, G. and Hamlich, M. (2021). Towards the Automation of Industrial Data Science: A Meta-learning based Approach. In Proceedings of the 23rd International Conference on Enterprise Information Systems - Volume 1: ICEIS, 709-716. https://doi.org/10.5220/0010457107090716**
 
 ```bibtex
 @inproceedings{Garouani2021,
