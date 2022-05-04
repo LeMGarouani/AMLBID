@@ -135,7 +135,7 @@ Explainer.run()
 ```
 Demonstration of the explanatory artifact:
 
-![https://drive.google.com/file/d/1Wk_7OU-dNEDG8S4SX48kOyZqRcmWRyf9/view?usp=sharing](https://drive.google.com/file/d/1Wk_7OU-dNEDG8S4SX48kOyZqRcmWRyf9/view?usp=sharing)
+![https://drive.google.com/file/d/1Wk_7OU-dNEDG8S4SX48kOyZqRcmWRyf9/view?usp=sharing]({% gdrive %}https://drive.google.com/file/d/1Wk_7OU-dNEDG8S4SX48kOyZqRcmWRyf9/view?usp=sharing{% gdrive %})
 ---
 
 ## Citing AMLBID
