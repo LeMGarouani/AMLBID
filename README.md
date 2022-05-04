@@ -128,6 +128,6 @@ Explainer.run(port=8889)
 ```
 Demonstration of the explanatory artifact:
 
-![https://github.com/LeMGarouani/AMLBID/blob/main/media/Demo.mp4](https://github.com/LeMGarouani/AMLBID/blob/main/media/Demo.mp4)
+![https://github.com/LeMGarouani/AMLBID/blob/main/media/demo2.0_optimized.mp4](https://github.com/LeMGarouani/AMLBID/blob/main/media/demo2.0_optimized.mp4)
 ---
 **AMLBID** was developed in the [LISIC Lab](https://www-lisic.univ-littoral.fr/) at the [ULCO University](https://www.univ-littoral.fr/) with funding from the [ULCO](https://www.univ-littoral.fr/), [HESTIM](https://www.hestim.ma/), and [CNRST](https://cnrst.ma/index.php/fr/).
