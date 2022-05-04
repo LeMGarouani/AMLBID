@@ -259,7 +259,7 @@ class DecisionPathTableComponent(ExplainerComponent):
 class DecisionPathGraphComponent(ExplainerComponent):
     def __init__(self, explainer, title="Decision path", name=None,
                     subtitle="Visualizing individual predictions process",
-                    hide_title=False,  hide_subtitle=False, hide_index=False, 
+                    hide_title=False,  hide_subtitle=False, hide_index=True, 
                     hide_highlight=False, hide_button=False,
                     hide_selector=False,
                     pos_label=None, index=None, highlight=None, description=None,

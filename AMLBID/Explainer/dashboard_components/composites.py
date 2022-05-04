@@ -34,7 +34,6 @@ from .ConfGenerator import *
 from .. import to_html
 
 
-
     
 class ImportancesComposite(ExplainerComponent):
     def __init__(self, explainer, title="Features Dependence", name=None,
@@ -821,7 +820,7 @@ class SuggestedModelComposite(ExplainerComponent):
 
     def layout(self):
         
-        ModelDescription=pd.read_pickle(os.path.dirname(__file__) +"/../assets/ModelsDescription.pkl")
+        ModelDescription=pd.read_csv(os.path.dirname(__file__) +"/../assets/ModelsDescription.csv")
         #MD=ModelDescription[(ModelDescription.id== "SVM")]
         MD=ModelDescription[(ModelDescription.Cname== self.explainer.model.__class__.__name__)]
         RecommendedConf=self.explainer.recommended_config[0][1]
@@ -905,7 +904,7 @@ class Testcomposite(ExplainerComponent):
     
     def layout(self):
         DataComposite=self.explainer.recommended_config
-        ModelDescription=pd.read_pickle(os.path.dirname(__file__) +"/../assets/ModelsDescription.pkl")
+        ModelDescription=pd.read_csv(os.path.dirname(__file__) +"/../assets/ModelsDescription.csv")
         def make_item(i,md,exp_acc,RecommendedConf,isHidden):
             rows=[]
             table_header = [html.Thead(html.Tr([html.Th("Hyperparameter"), html.Th("Value")]))]
@@ -1007,7 +1006,7 @@ class Testcomposite(ExplainerComponent):
 
     def to_html(self, state_dict=None, add_header=True):
         args = self.get_state_args(state_dict)
-        ModelDescription=pd.read_pickle(os.path.dirname(__file__) +"/../assets/ModelsDescription.pkl")
+        ModelDescription=pd.read_csv(os.path.dirname(__file__) +"/../assets/ModelsDescription.csv")
         DataComposite=self.explainer.recommended_config
         for index, item in zip(range(1), DataComposite):
                 RecommendedConf=item[1]
@@ -1376,10 +1375,10 @@ class DataProfilingmed(ExplainerComponent):
 
         super().__init__(explainer, title, name)
         self.scatter = ScatterComponent(explainer, name=self.name+"1", **kwargs)
-        self.samples = SamplesComponent(explainer, name=self.name+"1", **kwargs)
-        self.missingVal = MissComponent(explainer, name=self.name+"1", **kwargs)
-        self.duplicatedRows = duplicatedComponent(explainer, name=self.name+"1", **kwargs)
-
+        self.samples = SamplesComponent(explainer, name=self.name+"2", **kwargs)
+        self.missingVal = MissComponent(explainer, name=self.name+"3", **kwargs)
+        self.duplicatedRows = duplicatedComponent(explainer, name=self.name+"4", **kwargs)
+        self.overview = OverviewComponent(explainer, name=self.name+"5", **kwargs)
 
     def layout(self):
         tabs=[
@@ -1387,8 +1386,8 @@ class DataProfilingmed(ExplainerComponent):
                 dbc.Tab(label="Samples", tab_id="Samples"),
             ]
         
-        # if self.explainer.Dataset.isnull().sum().sum() + self.explainer.Dataset.isna().sum().sum() >0:
-        tabs.append(dbc.Tab(label="Missing values", tab_id="miss_vals"))
+        if self.explainer.Dataset.isnull().sum().sum() + self.explainer.Dataset.isna().sum().sum() >0:
+            tabs.append(dbc.Tab(label="Missing values", tab_id="miss_vals"))
         if len(self.explainer.Dataset) -len(self.explainer.Dataset.drop_duplicates()) >0:
             tabs.append(dbc.Tab(label="Duplicate rows", tab_id="dup_rows"))                   
                     
@@ -1411,27 +1410,27 @@ class DataProfilingmed(ExplainerComponent):
         ]  )
     
     def component_callbacks(self, app):
-        def DataOverview (ds):
-            #dataset general info
-            n_var = ds.shape[1]
-            n_obs = ds.shape[0]
-            n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
-            n_classes = ds.iloc[:, -1].nunique()
-            dup_rows =len(ds)-len(ds.drop_duplicates())
-            #varibales (data type) infos
-            Numeric = ds.select_dtypes(include='number').shape[1]
-            Categorical = ds.select_dtypes(include='object').shape[1]
-            Boolean = ds.select_dtypes(include='bool').shape[1]
-            Date = ds.select_dtypes(include='datetime64').shape[1]
-            Unsupported = 0            
-            global dsInfo, varInfo # les variable dsInfo et varInfo sont utilisé pour les informations du dataframe 
-            dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
-            varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
-            return dsInfo,varInfo
+#         def DataOverview (ds):
+#             #dataset general info
+#             n_var = ds.shape[1]
+#             n_obs = ds.shape[0]
+#             n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
+#             n_classes = ds.iloc[:, -1].nunique()
+#             dup_rows =len(ds)-len(ds.drop_duplicates())
+#             #varibales (data type) infos
+#             Numeric = ds.select_dtypes(include='number').shape[1]
+#             Categorical = ds.select_dtypes(include='object').shape[1]
+#             Boolean = ds.select_dtypes(include='bool').shape[1]
+#             Date = ds.select_dtypes(include='datetime64').shape[1]
+#             Unsupported = 0            
+#             global dsInfo, varInfo # les variable dsInfo et varInfo sont utilisé pour les informations du dataframe 
+#             dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
+#             varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
+#             return dsInfo,varInfo
 
 
         
-        dsInfo,varInfo = DataOverview(self.explainer.Dataset)
+#         dsInfo,varInfo = DataOverview(self.explainer.Dataset)
         
         @app.callback(Output("card-content", "children"), [Input("card-tabs", "active_tab")])
 
@@ -1440,90 +1439,96 @@ class DataProfilingmed(ExplainerComponent):
 
         def tab_content(active_tab):
 
-            data = [{
-            'values': [10,30,60],
-            'type': 'pie'}]
+#             data = [{
+#             'values': [10,30,60],
+#             'type': 'pie'}]
             
             
-            ds_info = pd.DataFrame({
-                    " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
-                   "  ": dsInfo,})
+#             ds_info = pd.DataFrame({
+#                     " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
+#                    "  ": dsInfo,})
             
             
-            vr_type = pd.DataFrame({
-                    " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
-                   "  ": varInfo,})
+#             vr_type = pd.DataFrame({
+#                     " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
+#                    "  ": varInfo,})
             
 
             
-            if active_tab=="Overview":
-                return html.Div([
-                    dbc.Row([     
+            # if active_tab=="Overview":
+#                 return html.Div([
+#                     dbc.Row([     
 
-                         dbc.Col([
-                                dbc.Card([
-                                    dbc.CardHeader([
+#                          dbc.Col([
+#                                 dbc.Card([
+#                                     dbc.CardHeader([
 
-                                                html.H4("Dataset info", className="card-title"),
-                                                html.Div([dbc.Badge("Warning", color="warning",className="ml-1")], style={"float": "right"}),
+#                                                 html.H4("Dataset info", className="card-title"),
+#                                                 html.Div([dbc.Badge("Warning", color="warning",className="ml-1")], style={"float": "right"}),
 
-                                        ])  ,
-                                    #tableau pour les info du dataset
-                                    dbc.CardBody([
-                                        dbc.Table.from_dataframe(ds_info, striped=True, bordered=True, hover=True,id='table'),
+#                                         ])  ,
+#                                     #tableau pour les info du dataset
+#                                     dbc.CardBody([
+#                                         dbc.Table.from_dataframe(ds_info, striped=True, bordered=True, hover=True,id='table'),
 
-                                        #graphique de distribution des classe
-                                        dcc.Graph(
-                                            id='graph',
-                                            figure={ 'data': data ,"layout": {"title": "Classes distribution","height": 400,  # px
-                                            }, }
-                                        #    }, }
-                                        ), 
+#                                         #graphique de distribution des classe
+#                                         dcc.Graph(
+#                                             id='graph',
+#                                             figure={ 'data': data ,"layout": {"title": "Classes distribution","height": 400,  # px
+#                                             }, }
+#                                         #    }, }
+#                                         ), 
 
-                                            ],id='card')
-                                    ])
-                                ]),
+#                                             ],id='card')
+#                                     ])
+#                                 ]),
                            
                         
-            dbc.Col([
-                                dbc.Card([
-                                    dbc.CardHeader([html.H4("Data type", className="card-title"),
-                                                    ]),
-                                    dbc.CardBody([#tableau pour le type des colonnes
-                                    dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
+#             dbc.Col([
+#                                 dbc.Card([
+#                                     dbc.CardHeader([html.H4("Data type", className="card-title"),
+#                                                     ]),
+#                                     dbc.CardBody([#tableau pour le type des colonnes
+#                                     dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
                                                 
                                        
-                                        html.Div([#les différent warning
-                                    html.H4("Warnings"),
-                                    dbc.Alert([
-                                        "Dataset has ",
-                        html.A(dsInfo[4], href="#", className="alert-link"),
-                        html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
-                        " duplicate rows ",
-                         html.Button('Drop dupplicate rows', id='submit-dupl', n_clicks=0, className="btn btn-outline-warning", style={"float": "right"}), 
-                        dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),
+#                                         html.Div([#les différent warning
+#                                     html.H4("Warnings"),
+#                                     dbc.Alert([
+#                                         "Dataset has ",
+#                         html.A(dsInfo[4], href="#", className="alert-link"),
+#                         html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
+#                         " duplicate rows ",
+#                          html.Button('Drop dupplicate rows', id='submit-dupl', n_clicks=0, className="btn btn-outline-warning", style={"float": "right"}), 
+#                         dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),
 
 
-                        dbc.Alert([
-                        "Dataset has ",
-                        html.A(dsInfo[3], href="#", className="alert-link"),
-                        html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",),
-                        " missing values ",
-                        #html.Button('Compléter les valeurs manquantes', id='submit-val', n_clicks=0, className="btn btn-outline-warning"), 
-                            #dcc.Download(id="download-text")
-                            ], id="alert-auto",color="info",is_open=True, duration=1000), 
+#                         dbc.Alert([
+#                         "Dataset has ",
+#                         html.A(dsInfo[3], href="#", className="alert-link"),
+#                         html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",),
+#                         " missing values ",
+#                         #html.Button('Compléter les valeurs manquantes', id='submit-val', n_clicks=0, className="btn btn-outline-warning"), 
+#                             #dcc.Download(id="download-text")
+#                             ], id="alert-auto",color="info",is_open=True, duration=1000), 
 
-                                    dbc.Alert([
-                        "Your ",
-                        html.A('unbalanced dataset', href="#", className="alert-link"),
-                        " will bias the prediction model towards the more common class!"
-                        ],color="warning",is_open=True, duration=1000),
+#                                     dbc.Alert([
+#                         "Your ",
+#                         html.A('unbalanced dataset', href="#", className="alert-link"),
+#                         " will bias the prediction model towards the more common class!"
+#                         ],color="warning",is_open=True, duration=1000),
 
-                        ],id="warnings") ])])
-                                ]), 
+#                         ],id="warnings") ])])
+#                                 ]), 
                         
                         
-              ]),  ])
+#               ]),  ])
+    
+    
+    #------------------------------------------------------------------------------------------------------------------
+            # classe= bf.iloc[:,-1].unique()
+            if active_tab=="Overview":
+                return html.Div([dbc.Row([dbc.Col([ self.overview.layout() ]) ])])
             
     #------------------------------------------------------------------------------------------------------------------
             # classe= bf.iloc[:,-1].unique()

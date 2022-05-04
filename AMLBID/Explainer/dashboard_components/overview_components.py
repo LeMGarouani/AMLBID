@@ -108,6 +108,8 @@ class PredictionSummaryComponent(ExplainerComponent):
             raise PreventUpdate
 
 
+        
+        
 class ImportancesComponent(ExplainerComponent):
     def __init__(self, explainer, title="Feature Importances", name=None,
                         subtitle="Which features had the biggest impact?",
@@ -172,6 +174,8 @@ class ImportancesComponent(ExplainerComponent):
         does the model get worse when you shuffle this feature, rendering it
         useless?).
         """
+        self.popout = GraphPopout('importances-'+self.name+'popout', 
+                            'importances-graph-'+self.name, self.title, self.description)
         self.register_dependencies('shap_values', 'shap_values_cats')
         if not (self.hide_type and self.importance_type == 'shap'):
             self.register_dependencies('permutation_importances', 'permutation_importances_cats')
@@ -247,6 +251,8 @@ class ImportancesComponent(ExplainerComponent):
                                         config=dict(modeBarButtons=[['toImage']], displaylogo=False))),
                     ]),
                 ]), 
+                
+                
             ])         
         ])
         

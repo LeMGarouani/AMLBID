@@ -14,7 +14,8 @@ __all__ = [
     'ScatterComponent',
     'SamplesComponent',
     'MissComponent',
-    'duplicatedComponent'
+    'duplicatedComponent',
+    'OverviewComponent'
 ]
 
 import numpy as np
@@ -31,6 +32,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.graph_objs as go
+from dash import Dash, dcc, html, Input, Output
 
 from ..dashboard_methods import *
 from .. import to_html
@@ -2063,3 +2065,121 @@ class duplicatedComponent(ExplainerComponent):
                             # dbc.Table.from_dataframe(duplDF, striped=True, bordered=True, hover=True)
                    
                 ])])
+
+
+
+class OverviewComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Overview", name=None,
+                    subtitle="How many false positives and false negatives?",
+                    **kwargs):
+
+        super().__init__(explainer, title, name)
+        
+        
+    def layout(self):
+        ds=self.explainer.Dataset
+        n_var = ds.shape[1]
+        n_obs = ds.shape[0]
+        n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
+        n_classes = ds.iloc[:, -1].nunique()
+        dup_rows =len(ds)-len(ds.drop_duplicates())
+        #varibales (data type) infos
+        Numeric = ds.select_dtypes(include='number').shape[1]
+        Categorical = ds.select_dtypes(include='object').shape[1]
+        Boolean = ds.select_dtypes(include='bool').shape[1]
+        Date = ds.select_dtypes(include='datetime64').shape[1]
+        Unsupported = 0            
+        global dsInfo, varInfo # les variable dsInfo et varInfo sont utilisé pour les informations du dataframe 
+        dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
+        varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
+        
+        data = [{'values': ds.iloc[:,-1].value_counts(),'label':ds.iloc[:,-1].unique(),'type': 'pie',}, ]
+            
+        # data = [{
+        #     'values': [10,30,60],
+        #     'type': 'pie'}]
+        
+        ds_info = pd.DataFrame({
+                    " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
+                   "  ": dsInfo,})
+        
+        vr_type = pd.DataFrame({
+                    " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
+                   "  ": varInfo,})
+        return dbc.Row([     
+
+                         dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([
+
+                                                html.H4("Dataset info", className="card-title"),
+                                                html.Div([dbc.Badge("Warning", color="warning",className="ml-1")], style={"float": "right"}),
+
+                                        ])  ,
+                                    #tableau pour les info du dataset
+                                    dbc.CardBody([
+                                        dbc.Table.from_dataframe(ds_info, striped=True, bordered=True, hover=True,id='table'),
+
+                                        #graphique de distribution des classe
+                                        dcc.Graph(
+                                            id='graph',
+                                            figure={ 'data': data ,"layout": {"title": "Classes distribution","height": 400,  # px
+                                            }, }
+                                        #    }, }
+                                        ), 
+
+                                            ],id='card')
+                                    ])
+                                ]),
+                           
+                        
+            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([html.H4("Data type", className="card-title"),
+                                                    ]),
+                                    dbc.CardBody([#tableau pour le type des colonnes
+                                    dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
+                                                
+                                       
+                                        html.Div([#les différent warning
+                                    html.H4("Warnings"),
+                                    dbc.Alert([
+                                        "Dataset has ",
+                        html.A(dsInfo[4], href="#", className="alert-link"),
+                        html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
+                        " duplicate rows ",
+                         html.Button('Drop dupplicate rows', id='submit-dupl', n_clicks=0, className="btn btn-outline-warning", style={"float": "right"}), 
+                        dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),
+
+
+                        dbc.Alert([
+                        "Dataset has ",
+                        html.A(dsInfo[3], href="#", className="alert-link"),
+                        html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",),
+                        " missing values ",
+                        #html.Button('Compléter les valeurs manquantes', id='submit-val', n_clicks=0, className="btn btn-outline-warning"), 
+                            #dcc.Download(id="download-text")
+                            ], id="alert-auto",color="info",is_open=True, duration=1000), 
+
+                                    dbc.Alert([
+                        "Your ",
+                        html.A('unbalanced dataset', href="#", className="alert-link"),
+                        " will bias the prediction model towards the more common class!"
+                        ],color="warning",is_open=True, duration=1000),
+
+                        ],id="warnings") ])])
+                                ]), 
+                        
+                        
+              ])
+    
+        #méthode qui s'effectue lors de l'appuie sur le boutoun pour supprimer les duplicate rows
+    def component_callbacks(self, app):
+        @app.callback(
+            Output('download-dupl', 'data'), Input('submit-dupl', 'n_clicks'), prevent_initial_call=True)
+        
+        
+        def displayClickDupl(n_clicks):
+            bf=self.explainer.Dataset.drop_duplicates(ignore_index=True)
+            print("im in the controller")
+            return dcc.send_data_frame(bf.to_csv, "cleaned_data.csv")
