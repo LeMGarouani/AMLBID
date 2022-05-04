@@ -114,7 +114,7 @@ def card(html:str, title:str=None, subtitle:str=None, border=True)->str:
     and subtitle to the card.
     """
     if title:
-        card_header = f"""<div class="card-header"><h3 class="card-title" style="text-align: center;" >AMLBID dashboard</h3>"""
+        card_header = f"""<div class="card-header"><h3 class="card-title">{title}</h3>"""
         if subtitle:
             card_header += f"""<h6 class="card-subtitle">{subtitle}</h6></div>"""
         else:
