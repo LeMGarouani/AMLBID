@@ -74,7 +74,6 @@ Below is a minimal working example of the `Recommender`mode .
 
 ```python
 from AMLBID.Recommender import AMLBID_Recommender
-from AMLBID.Explainer import AMLBID_Explainer
 from AMLBID.loader import *
 
 #load dataset
