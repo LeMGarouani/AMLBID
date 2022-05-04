@@ -166,7 +166,9 @@ class ExplainerTabsLayout(ExplainerComponent):
                     dbc.Col([
                         html.Div([
                             # dbc.Button('&#xf556', id="download-button-all"+self.name, n_clicks=None, size="sm"),
-                            html.Button(id="download-button-all"+self.name, n_clicks=None,  style={"border": "none","border-radius": "30px","width":"38px","height":"38px","back-ground-color":"red","background-image": "url(./assets/share_.png)"}),
+                            html.Button(id="download-button-all"+self.name, n_clicks=None, style={"border": "none","border-radius": "30px","width":"38px","height":"38px","back-ground-color":"red","background-image": "url(./assets/share_.png)"}),
+                            dbc.Tooltip(f"Export the dashboard as a dynamique HTML report",target="download-button-all",placement="left",
+                                    style={"width":"300px"}),
                             dcc.Download('download-page-'+self.name),
                             # dbc.DropdownMenu([
                             #         dbc.DropdownMenuItem("All tabs", id="download-button-all"+self.name, n_clicks=None), 
@@ -897,16 +899,16 @@ class ExplainerDashboard:
                 from waitress import serve
                 serve(self.app.server, host='0.0.0.0', port=port)
             else:
-                self.app.run_server(port=port, **kwargs)
+                self.app.run_server(port=port,debug=False, **kwargs)
         elif self.mode == 'external':
             if not self.is_colab:
                 #print(f"Starting ExplainerDashboard on http://localhost:{port}\n", flush=True)
                 pass
-            self.app.run_server(port=port, mode=self.mode, **kwargs)
+            self.app.run_server(port=port, mode=self.mode,debug=False, **kwargs)
         elif self.mode in ['inline', 'jupyterlab']:
             print(f"Starting ExplainerDashboard inline (terminate it with "
                   f"ExplainerDashboard.terminate({port}))", flush=True)
-            self.app.run_server(port=port, mode=self.mode, 
+            self.app.run_server(port=port, mode=self.mode, debug=False,
                                 width=self.width, height=self.height, **kwargs)
         else:
             raise ValueError(f"Unknown mode: {mode}...")
@@ -1648,9 +1650,9 @@ class InlineExplainer:
         """
         pio.templates.default = "none"
         if self._mode in ['inline', 'jupyterlab']:
-            app.run_server(mode=self._mode, width=self._width, height=self._height, port=self._port)
+            app.run_server(mode=self._mode, width=self._width, height=self._height,debug=False, port=self._port)
         elif self._mode == 'external':
-             app.run_server(mode=self._mode, port=self._port, **self._kwargs)
+             app.run_server(mode=self._mode, port=self._port,debug=False, **self._kwargs)
         else:
             raise ValueError("mode should either be 'inline', 'jupyterlab'  or 'external'!")
 

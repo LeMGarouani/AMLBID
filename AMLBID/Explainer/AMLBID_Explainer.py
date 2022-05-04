@@ -3244,6 +3244,6 @@ from .AMLBID_Dashboard import *
 def explain(model,conf, X_test, Y_test):
     dataset=conf[1]
     explainer = ClassifierExplainer(model,conf[0],conf[1], X_test, Y_test)
-    db = ExplainerDashboard(explainer, mode='external',dev_tools_props_check=False)
+    db = ExplainerDashboard(explainer, mode='external',dev_tools_props_check=False ,debug=False)
     return db
 

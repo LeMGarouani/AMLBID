@@ -33,7 +33,6 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.graph_objs as go
 from dash import Dash, dcc, html, Input, Output
-
 from ..dashboard_methods import *
 from .. import to_html
 
@@ -2106,6 +2105,8 @@ class OverviewComponent(ExplainerComponent):
         vr_type = pd.DataFrame({
                     " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
                    "  ": varInfo,})
+        hide_dup= True if dsInfo[4]==0 else False
+        hide_miss=True if dsInfo[3]==0 else False
         return dbc.Row([     
 
                          dbc.Col([
@@ -2141,31 +2142,24 @@ class OverviewComponent(ExplainerComponent):
                                     dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
                                                 
                                        
-                                        html.Div([#les différent warning
+                      html.Div([#les différent warning
                                     html.H4("Warnings"),
-                                    dbc.Alert([
-                                        "Dataset has ",
-                        html.A(dsInfo[4], href="#", className="alert-link"),
+                        make_hideable(dbc.Alert(["Dataset has ", html.A(dsInfo[4], href="#", className="alert-link"),
                         html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
                         " duplicate rows ",
                          html.Button('Drop dupplicate rows', id='submit-dupl', n_clicks=0, className="btn btn-outline-warning", style={"float": "right"}), 
-                        dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),
+                        dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),hide=hide_dup),
 
 
-                        dbc.Alert([
-                        "Dataset has ",
-                        html.A(dsInfo[3], href="#", className="alert-link"),
+                        make_hideable(dbc.Alert(["Dataset has ", html.A(dsInfo[3], href="#", className="alert-link"),
                         html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",),
                         " missing values ",
                         #html.Button('Compléter les valeurs manquantes', id='submit-val', n_clicks=0, className="btn btn-outline-warning"), 
                             #dcc.Download(id="download-text")
-                            ], id="alert-auto",color="info",is_open=True, duration=1000), 
+                            ], id="alert-auto",color="info",is_open=True),hide=hide_miss), 
 
-                                    dbc.Alert([
-                        "Your ",
-                        html.A('unbalanced dataset', href="#", className="alert-link"),
-                        " will bias the prediction model towards the more common class!"
-                        ],color="warning",is_open=True, duration=1000),
+                         dbc.Alert(["Your ",html.A('unbalanced dataset', href="#", className="alert-link"),
+                        " will bias the prediction model towards the more common class!" ],color="warning",is_open=True),
 
                         ],id="warnings") ])])
                                 ]), 
