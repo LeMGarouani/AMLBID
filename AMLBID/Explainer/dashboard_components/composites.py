@@ -1,4 +1,5 @@
 __all__ = [
+    'ImportComposite' ,
     'ImportancesComposite',
     'ClassifierModelStatsComposite',
     'RegressionModelStatsComposite',
@@ -14,11 +15,12 @@ __all__ = [
     'DataProfilingmed',
     'ExportDash'
 ]
+
+import socket
 import os.path
 import pandas as pd
 import dash_bootstrap_components as dbc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash
 from ..AMLBID_Explainer import RandomForestExplainer, XGBExplainer
@@ -34,10 +36,69 @@ from .ConfGenerator import *
 from .. import to_html
 
 
+
+class ImportComposite(ExplainerComponent):
+    # Composite responsible for the first item in the page, with a button allowing to upload a file from the user's computer
+    def __init__(self, explainer, title="Document selection", name=None,
+                    hide_title=False, hide_selector=False, 
+                    hide_globalcutoff=False,
+                    hide_modelsummary=False, hide_confusionmatrix=False,
+                    hide_precision=False, hide_classification=False,
+                    hide_rocauc=False, hide_prauc=False,
+                    hide_liftcurve=False, hide_cumprecision=False,
+                    pos_label=None,
+                    bin_size=0.1, quantiles=10, cutoff=0.5, **kwargs):
+
+        super().__init__(explainer, title, name)
+
+
+    def layout(self):
+        return html.Div([
+            dcc.Upload(
+                id='upload-file',
+                children=html.Div(['Drag and Drop or ',html.A('Select Files')]),
+                style={
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin': '10px'
+                },
+                multiple=True
+            ),
+            html.Div(id='output-file')
+        ])
+    
+    def component_callbacks(self, app) : 
+        @app.callback(Output('output-file', 'children'),[Input('upload-file', 'filename'),Input('upload-file', 'contents')])
+        def update_output(filename, contents):
+            if contents is not None:
+                content_string = ''.join(contents)
+                content_type, content_string = content_string.split(',')
+                decoded = base64.b64decode(content_string)
+                df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+                filename = filename[0]
+                socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                Data,X_train,Y_train,X_test,Y_test=load_data(filename)
+                AMLBID,Config=AMLBID_Recommender.recommend(Data, metric="Accuracy", mode="Recommender_Explainer")
+                AMLBID.fit(X_train, Y_train)
+                Explainer = AMLBID_Explainer.explain(AMLBID,Config, X_test, Y_test)
+                Explainer.run(port = 8050)
+                
+                return html.Div('CSV file uploaded and processed')
+            else:
+                return html.Div('Please upload a file')
+    
+    
+    
+#--------------------------------------------------------------------------------------------------------
     
 class ImportancesComposite(ExplainerComponent):
     def __init__(self, explainer, title="Features Dependence", name=None,
-                    hide_importances=False,hide_title=False,
+                    hide_importances=True,hide_title=True,
                     hide_selector=True,depth=None, **kwargs):
         """Overview tab of feature importances
 
@@ -508,7 +569,7 @@ class WhatIfComposite(ExplainerComponent):
                         ], md=6), hide=self.hide_whatifcontributiontable),
                     dbc.Col([self.contribgraph.layout()], style=dict(marginBottom=15), md=6),
                 ])
-        ], fluid=True)
+        ], fluid=True)  
     
     def to_html_(self, state_dict=None, add_header=True):
         html = to_html.title(self.title)
@@ -1368,8 +1429,57 @@ class DataProfiling(ExplainerComponent):
             
             
             
+
+class Homepage(ExplainerComponent):
+    def __init__(self, explainer,title="Home !", name=None, **kwargs ):
+        super().__init__(explainer, title,name)
+    
+    def component_callbacks(self, app):
+        DataComposite=self.explainer.recommended_config   
+        
+        @app.callback(
+            [Output(f"collapse-1", "is_open"),Output(f"collapse-2", "is_open"),Output(f"collapse-3", "is_open"),
+             Output(f"alert-auto1", "is_open"),Output(f"alert-auto2", "is_open"),Output(f"alert-auto3", "is_open")],
+            [Input(f"group-1-toggle", "n_clicks"),Input(f"group-2-toggle", "n_clicks"),Input(f"group-3-toggle", "n_clicks"),
+             Input(f"example-button1", "n_clicks"),Input(f"example-button2", "n_clicks"),Input(f"example-button3", "n_clicks")],
+            [State(f"collapse-1", "is_open"),State(f"collapse-2", "is_open"),State(f"collapse-3", "is_open"),
+             State("alert-auto1", "is_open"),State("alert-auto2", "is_open"),State("alert-auto3", "is_open")],
+        )
+                
+    
+        def toggle_accordion(n1, n2, n3,n4,n5,n6, is_open1, is_open2, is_open3, is_open4, is_open5, is_open6):
+            
+            ctx = dash.callback_context
+
+            if not ctx.triggered:
+                return False, False, False,False, False, False
+            else:
+                button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+            if button_id == "group-1-toggle" and n1:
+                return not is_open1, False, False,False, False, False
+            elif button_id == "group-2-toggle" and n2:
+                return False, not is_open2, False,False, False, False
+            elif button_id == "group-3-toggle" and n3:
+                return False, False, not is_open3,False, False, False
+            elif button_id == "example-button1" and n4:
+                item=DataComposite[0]
+                generate_pipeline_file(item[0][1].__class__.__name__,item[1],'your dataset path')
+                return  False, False, False,not is_open4,False, False
+            elif button_id == "example-button2" and n5:
+                item=DataComposite[1]
+                generate_pipeline_file(item[0][1].__class__.__name__,item[1],'your dataset path')
+                return False, False, False,False,not is_open5,False
+            elif button_id == "example-button3" and n6:
+                item=DataComposite[2]
+                generate_pipeline_file(item[0][1].__class__.__name__,item[1],'your dataset path')
+                return False, False,False, False, False, not is_open6
+        return False, False, False,False, False, False
+            
             #--------------------------------------------------------------------------------------------------------
 
+            
+            
 class DataProfilingmed(ExplainerComponent):
     def __init__(self, explainer, title="Provided Data", name=None, **kwargs):
 

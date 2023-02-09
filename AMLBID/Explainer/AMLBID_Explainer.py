@@ -19,7 +19,7 @@ from typing import List, Union
 import numpy as np
 import pandas as pd
 
-# from pdpbox import pdp
+from pdpbox import pdp
 import shap
 
 from dtreeviz.trees import ShadowDecTree, dtreeviz

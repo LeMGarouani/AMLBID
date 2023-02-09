@@ -419,6 +419,9 @@ class ExplainerDashboard:
                         "setting decision_trees=False...", flush=True)
                 decision_trees = False
         
+            #Thibault 2022
+            tabs.append(ImportComposite)
+
             if importances:
                 tabs.append(ImportancesComposite)
             if model_summary:
