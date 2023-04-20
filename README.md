@@ -30,8 +30,8 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
 </p>
 
 ---
-![https://upload.wikimedia.org/wikipedia/commons/archive/d/d4/20180501233355%21Software-update-available.svg](https://upload.wikimedia.org/wikipedia/commons/archive/d/d4/20180501233355%21Software-update-available.svg) 
-## Updates 
+## Updates  ![https://upload.wikimedia.org/wikipedia/commons/archive/d/d4/20180501233355%21Software-update-available.svg](https://upload.wikimedia.org/wikipedia/commons/archive/d/d4/20180501233355%21Software-update-available.svg) 
+
 
  - A new data profiling overview that enable you to explore the input data and automatically perform the pre-processing\,(data imputation, normalization, encoding, and duplicates cleaning).
  - You can \textit{export} the generated dashboard as a dynamic HTML and PDF report file.
