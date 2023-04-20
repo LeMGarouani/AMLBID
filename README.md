@@ -19,7 +19,7 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
 
 * The framework is equipped with a **recommendation engine**, that provide suggestion of the most appropriate pipelines *(classifiers with their hyperparameters configuration)* through the use of a collaborative **knowledge-base** that grows by time as more users are using our tool.
 
-* AMLBID will automate the most tedious part of machine learning by intelligently exploring more than **3.000.000** possible pipelines to find the best one for your data in a **negligible amount of time** and **without** need to a strong **computational budget**.
+* AMLBID will automate the most tedious part of machine learning by intelligently exploring more than **4.000.000** possible pipelines to find the best one for your data in a **negligible amount of time** and **without** need to a strong **computational budget**.
 
 * Automatically select ML algorithms and hyperparameters configurations for a given machine-learning problem more quickly than current methods with a **computational complexity near O(1)**.
 
