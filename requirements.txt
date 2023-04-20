@@ -6,7 +6,7 @@ dtreeviz>=1.3
 numpy
 pandas>=1.1
 scikit-learn
-shap>=0.37
+shap
 joblib
 oyaml
 click
