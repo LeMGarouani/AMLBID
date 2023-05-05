@@ -35,7 +35,7 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
 
  - A new data profiling tool that allows you to explore input data and automatically perform pre-processing tasks such as data imputation, normalization, encoding, and duplicate cleaning.
  - You can **export** the generated dashboard as a dynamic HTML and PDF report file.
- - The new release is now compiled with the <a href = "https://pyinstaller.org/en/stable/">PyInstaller</a> for almost all well-known operating systems.  See [Packaging Your Python App Into Standalone Executables | PyInstaller](https://www.youtube.com/watch?v=s-lKHA9o_pY) for info on how to properly install dtreeviz.
+ - The new release is now compiled with the <a href = "https://pyinstaller.org/en/stable/">PyInstaller</a> for almost all well-known operating systems.  See [Packaging Your Python App Into Standalone Executables | PyInstaller](https://www.youtube.com/watch?v=s-lKHA9o_pY) for info on how to install AMLBID as a desktop standalone distribution.
 ---
 ## Usage
 The `Framework` will help you with:
