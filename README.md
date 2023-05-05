@@ -33,7 +33,7 @@ Curently, **AMLBID** is a Python-Package representing a **meta learning**-based 
 ## Updates  ![https://upload.wikimedia.org/wikipedia/commons/archive/d/d4/20180501233355%21Software-update-available.svg](https://upload.wikimedia.org/wikipedia/commons/archive/d/d4/20180501233355%21Software-update-available.svg) 
 
 
- - A new data profiling tool that allows you to explore input data and automatically perform pre-processing tasks such as data imputation, normalization, encoding, and duplicate cleaning.
+ - A new data profiling tool that allows you to explore input data and automatically perform pre-processing tasks such as data imputation, normalization, encoding, and duplicate cleaning is added to the AMLBID explainer module.
  - You can **export** the generated dashboard as a dynamic HTML and PDF report file.
  - The new release is now compiled with the <a href = "https://pyinstaller.org/en/stable/">PyInstaller</a> for almost all well-known operating systems.  See [Packaging Your Python App Into Standalone Executables | PyInstaller](https://www.youtube.com/watch?v=s-lKHA9o_pY) for info on how to install AMLBID as a desktop standalone distribution.
 ---
