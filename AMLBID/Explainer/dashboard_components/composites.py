@@ -12,7 +12,8 @@ __all__ = [
     'RefinementComposite',
     'DataProfiling',
     'DataProfilingmed',
-    'ExportDash'
+    'ExportDash',
+    'DocumentationComposite'
 ]
 import os.path
 import pandas as pd
@@ -33,10 +34,270 @@ from dash.dependencies import Input, Output, State
 from .ConfGenerator import *
 from .. import to_html
 
-
     
+class DocumentationComposite(ExplainerComponent):
+    def __init__(self, explainer, title="Documentation", name=None,
+                    hide_title=True, hide_selector=True, 
+                    hide_globalcutoff=False,
+                    hide_modelsummary=False, hide_confusionmatrix=False,
+                    hide_precision=False, hide_classification=False,
+                    hide_rocauc=False, hide_prauc=False,
+                    hide_liftcurve=False, hide_cumprecision=False,
+                    pos_label=None,
+                    bin_size=0.1, quantiles=10, cutoff=0.5, **kwargs):
+
+        super().__init__(explainer, title, name)
+
+    def layout(self):
+        return  html.Div(
+            html.Article(children=[
+                html.H1("AMLBID Vocabulary",id="jadbio-vocabulary"),
+                html.P(children=[
+                    html.Button(html.A("A",href="#A",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("B",href="#B",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("C",href="#C",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("D",href="#D",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("E",href="#E",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("F",href="#F",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("G",href="#G",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("H",href="#H",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("I",href="#I",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("J",href="#J",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("K",href="#K",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("L",href="#L",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("M",href="#M",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("N",href="#N",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("O",href="#O",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("P",href="#P",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("Q",href="#Q",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("R",href="#R",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("S",href="#S",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("T",href="#T",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("U",href="#U",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("V",href="#V",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("W",href="#W",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("X",href="#X",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("Y",href="#Y",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                    html.Button(html.A("Z",href="#Z",className="aLettre"),className="btn btn-primary pButton",style={'margin':1 ,'width':40 , 'color':'black'}),
+                ]),
+                html.H2(html.Div("A",id="A"),id="a"),
+                html.Details(children=[
+                    html.Summary('Acuracy',className='h4'),
+                    html.P('Accuracy is the ratio of the number of correct classifications (true positive samples and true negative samples) to the total number of positive and negative samples')],
+                    className='note'),
+
+                 html.Details(children=[
+                    html.Summary('Analysis',className='h4'),
+                    html.P('Analysis includes data cleaning, transformation, exploration and modeling for desicion making.')],
+                    className='note'),
+                
+                html.Details(children=[
+                    html.Summary('AUC (Area Under the ROC curve)',className='h4'),
+                    html.P('The Area Under the ROC curve. The AUC equals the average sensitivity for all possible specificities (and/or false positive rates). The AUC also equals the probability that the model will correctly classify a randomly selected pair of one positive and one negative sample. A measure of how well a model can distinguish between two groups (e.g. cases/controls). An area of 1 represents a perfect model, an area of 0.5 represents random guessing.')],
+                    className='note'),
+                
+                 html.Details(children=[
+                    html.Summary('Average F1 Score',className='h4'),
+                    html.P('The average F1 score across all classes.')],
+                    className='note'),
+                    
+                html.H2(html.Div("B",id="B"),id="b"),
+                html.Details(children=[
+                    html.Summary('Bias',className='h4'),
+                    html.P('The deviation from the true value of an estimated metric. This bias is often produced when computing unadjusted estimates from cross-validation, often resulting in over-estimation of final model’s true performance.')],
+                    className='note'),
+
+                html.H2(html.Div("C",id="C"),id="c"),
+                html.Details(children=[
+                    html.Summary('Categorical feature',className='h4'),
+                    html.P('Categorical data can take discrete numerical, or qualitative values such as 1 for red colour and 2 for blue color, or strings.')],
+                    className='note'),
+
+
+                 html.Details(children=[
+                    html.Summary('Class',className='h4'),
+                    html.P('Classes are the different values of a categorical feature.')],
+                    className='note'),
+
+                     html.Details(children=[
+                    html.Summary('Classification analysis',className='h4'),
+                    html.P('An analysis that is used to predict the class (category) an instance of data belongs to. The input of a classification algorithm is a set of labeled examples and the input of a classification algorithm is a set of labeled examples and the output of a classification algorithm is a classifier, which you can use to predict the class of new unlabeled instances. If input data belong to two classes (categories), the analysis will be a binary classification task. If input data belong to more than two classes, the analysis will be a multi-class classification analysis.')],
+                    className='note'),
+
+                    
+                 html.Details(children=[
+                    html.Summary('Confusion Matrix',className='h4'),
+                    html.P('A 2X2 double-entry matrix, where the first dimension refers to the observed class membership (i.e. “positive” or “negative”) frequencies, and the second dimension refers to the predicted class membership frequencies.')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('Correlation Coefficient',className='h4'),
+                    html.P('Correlation Coefficient is a measure of linear association between two variables. Values of the correlation coefficient are always between -1 and +1. A correlation coefficient of +1 indicates that two variables are perfectly related in a positive linear sense, a correlation coefficient of -1 indicates that two variables are perfectly related in a negative linear sense.')],
+                    className='note'),
+
+                    
+                html.Details(children=[
+                    html.Summary('Classifier',className='h4'),
+                    html.P('An algorithm trained for classification tasks.')],
+                    className='note'),
+                
+                html.H2(html.Div("D",id="D"),id="d"),
+                 html.Details(children=[
+                    html.Summary('Dataset',className='h4'),
+                    html.P('A set of samples with their corresponding feature values.')],
+                    className='note'),
+
+                html.H2(html.Div("F",id="F"),id="f"),
+                 html.Details(children=[
+                    html.Summary('F1 score',className='h4'),
+                    html.P('F1 score is the harmonic average of the precision and recall of a reference class, where an F1 score reaches its best value at 1 (perfect precision and recall) and worst at 0.')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('False Negatives (FN)',className='h4'),
+                    html.P('False Negatives refer to the positive samples that are incorrectly predicted negative samples. For example, cancer patients that are predicted as control subjects.')],
+                    className='note'),
+
+                 html.Details(children=[
+                    html.Summary('False Positives (FP)',className='h4'),
+                    html.P('False Positives refer to the negative samples that are incorrectly predicted positive samples. For example, controls subjects that are predicted as cancer patients.')],
+                    className='note'),
+
+                 html.Details(children=[
+                    html.Summary('Feature',className='h4'),
+                    html.P('A measured or computed quantity that characterizes a sample.')],
+                    className='note'),
+
+                    
+                 html.Details(children=[
+                    html.Summary('Feature importance',className='h4'),
+                    html.P('Feature importance refers to techniques that assign a score to independent features (predictors) based on how much each feature affects the outcome (dependent) variable.')],
+                    className='note'),
+
+                                        
+                 html.Details(children=[
+                    html.Summary('False Positive Rate (FPR)',className='h4'),
+                    html.P('See Specificity.')],
+                    className='note'),
+
+                html.H2(html.Div("H",id="H"),id="h"),
+                    html.Details(children=[
+                    html.Summary('hyper-parameter',className='h4'),
+                    html.P('A parameter of an algorithm.')],
+                    className='note'),
+                
+                
+                html.H2(html.Div("M",id="M"),id="m"),
+                    html.Details(children=[
+                    html.Summary('Mean/Mode Imputation',className='h4'),
+                    html.P('The replacement of missing values (usually called NaN’s or NA’s) within a feature by its mean, if it is numeric, or its mode (most frequent), if it is categorical.')],
+                    className='note'),
+
+                    html.Details(children=[
+                    html.Summary('Model',className='h4'),
+                    html.P('An algorithm (function) that accepts one or more vectors of feature values and returns the corresponding predictions. If the outcome is the state of the sample (e.g., disease vs. control) the corresponding model is better described as a diagnostic model. If the outcome corresponds to a prognosis for a patient the model is better described as a prognostic model. If the outcome regards a value that becomes known in the future, then it is a predictive model.')],
+                    className='note'),
+
+                    
+                    html.Details(children=[
+                    html.Summary('Model matrix',className='h4'),
+                    html.P('A matrix containing the measured independent variables across samples.')],
+                    className='note'),
+
+                html.H2(html.Div("O",id="O"),id="o"),
+                    html.Details(children=[
+                    html.Summary('Observation',className='h4'),
+                    html.P('see sample.')],
+                    className='note'),
+
+                html.H2(html.Div("P",id="P"),id="p"),
+                    html.Details(children=[
+                    html.Summary('Performance metric',className='h4'),
+                    html.P('A metric that describes/explains the performance of your predictive model.')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('Pipeline',className='h4'),
+                    html.P('Algorithmic tasks used serially when performing an analysis.')],
+                    className='note'),
+
+                 html.Details(children=[
+                    html.Summary('Precision',className='h4'),
+                    html.P('Sum of true positives divided by predicted positive samples (true positives + false positives).')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('Predictive algorithm',className='h4'),
+                    html.P('The modelling algorithm used for prediction. Usually the final step of a pipeline.')],
+                    className='note'),
+
+                 html.Details(children=[
+                    html.Summary('Predictive Performance',className='h4'),
+                    html.P('The performance of the created predictive model.')],
+                    className='note'),
+
+                    
+                 html.Details(children=[
+                    html.Summary('Predictor',className='h4'),
+                    html.P('Any independent feature included in the produced model/signature.')],
+                    className='note'),
+
+                                        
+                 html.Details(children=[
+                    html.Summary('Probabilities plot',className='h4'),
+                    html.P('In a probabilities plot, the probability density function of each class is plotted against the predicted probability of belonging to this specific class.')],
+                    className='note'),
+
+                 html.H2(html.Div("R",id="R"),id="r"),
+                    html.Details(children=[
+                    html.Summary('Recall',className='h4'),
+                    html.P('See Sensitivity term for a definition.')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('ROC (Receiver Operating Characteristic) curve',className='h4'),
+                    html.P('A curve showing all optimally achieved trade-offs between the False Positive Rate (equal to 1 minus Specificity) and the True Positive Rate (equal to the Sensitivity) of a binary classification model. The ROC curve is obtained by varying all possible different model classification thresholds. The higher TPR and the lower FPR is for each threshold the better, so classifiers that have curves that are more top-left-side are better. The integral of this curve corresponds to the model’s AUC.')],
+                    className='note'),
+
+                 html.H2(html.Div("S",id="S"),id="s"),
+                    html.Details(children=[
+                    html.Summary('Sample',className='h4'),
+                    html.P('The measurement of a datapoint’s features.')],
+                    className='note'),
+
+                html.H2(html.Div("T",id="T"),id="t"),
+                    html.Details(children=[
+                    html.Summary('True Negatives (TN)',className='h4'),
+                    html.P('True negatives are correctly predicted negative samples. For example, the healthy samples that are predicted as negative samples.')],
+                    className='note'),
+
+                 html.Details(children=[
+                    html.Summary('True Positives (TP)',className='h4'),
+                    html.P('True Positives are correctly predicted positive samples. For example, the cancer patients that are predicted as positive samples.')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('True Positive Rate (TPR)',className='h4'),
+                    html.P('See Sensitivity.')],
+                    className='note'),
+
+                html.Details(children=[
+                    html.Summary('True Negative Rate (TNR)',className='h4'),
+                    html.P('See Sensitivity.')],
+                    className='note'),
+
+                html.H2(html.Div("V",id="V"),id="v"),
+                    html.Details(children=[
+                    html.Summary('Validation',className='h4'),
+                    html.P('The procedure during which an external dataset is used to validate the final produced model.')],
+                    className='note')
+                     
+               ],className='md-content__inner md-typeset'),className='md-content')
+
+
+##$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 class ImportancesComposite(ExplainerComponent):
-    def __init__(self, explainer, title="Features Dependence", name=None,
+    def __init__(self, explainer, title="Features ", name=None,
                     hide_importances=False,hide_title=False,
                     hide_selector=True,depth=None, **kwargs):
         """Overview tab of feature importances
@@ -117,7 +378,7 @@ class ImportancesComposite(ExplainerComponent):
         if add_header:
             return to_html.add_header(html)
         return html
-
+##$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 class ClassifierModelStatsComposite(ExplainerComponent):
     def __init__(self, explainer, title="Obtained Performances", name=None,
                     hide_title=True, hide_selector=True, 

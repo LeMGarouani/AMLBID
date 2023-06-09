@@ -10,12 +10,20 @@ __all__ = [
     'RocAucComponent',
     'PrAucComponent',
     'CumulativePrecisionComponent',
-    'ClassifierModelSummaryComponent' 
+    'ClassifierModelSummaryComponent',
+    'ScatterComponent',
+    'SamplesComponent',
+    'MissComponent',
+    'duplicatedComponent',
+    'OverviewComponent'
 ]
 
 import numpy as np
 import pandas as pd
-
+import plotly.express as px
+import math
+from dash import Dash, dash_table
+from collections import OrderedDict
 import dash
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
@@ -24,8 +32,9 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.graph_objs as go
-
+from dash import Dash, dcc, html, Input, Output
 from ..dashboard_methods import *
+from .. import to_html
 
 
 class ClassifierRandomIndexComponentPerso(ExplainerComponent):
@@ -949,6 +958,16 @@ class PrecisionComponent(ExplainerComponent):
 
 
 class ConfusionMatrixComponent(ExplainerComponent):
+    
+    _state_props = dict(
+        cutoff=('confusionmatrix-cutoff-', 'value'),
+        percentage=('confusionmatrix-percentage-', 'value'),
+        normalize=('confusionmatrix-normalize-', 'value'),
+        binary=('confusionmatrix-binary-', 'value'),
+        pos_label=('pos-label-', 'value')
+    )
+        
+        
     def __init__(self, explainer, title="Confusion Matrix", name=None,
                     subtitle="How many false positives and false negatives?",
                     hide_title=False, hide_subtitle=False, hide_footer=False,
@@ -1000,7 +1019,9 @@ class ConfusionMatrixComponent(ExplainerComponent):
         """
 
         self.selector = PosLabelSelector(explainer, name=self.name, pos_label=pos_label)
-        self.register_dependencies("preds", "pred_probas", "pred_percentiles")
+        self.popout = GraphPopout('confusionmatrix-'+self.name+'popout', 'confusionmatrix-graph-'+self.name, 
+                            self.title, self.description)
+        self.register_dependencies("preds", "pred_probas", "pred_percentiles", "confusion_matrix")
 
     def layout(self):
         return dbc.Card([
@@ -1019,6 +1040,12 @@ class ConfusionMatrixComponent(ExplainerComponent):
                 ], justify="end"),
                 dcc.Graph(id='confusionmatrix-graph-'+self.name,
                                             config=dict(modeBarButtons=[['toImage']], displaylogo=False)),
+                dbc.Row([
+                    make_hideable(
+                        dbc.Col([
+                            self.popout.layout()
+                        ], md=2, align="start"), hide=False),
+                ], justify="end"),
             ]),
             make_hideable(
             dbc.CardFooter([
@@ -1073,6 +1100,19 @@ class ConfusionMatrixComponent(ExplainerComponent):
             ]), hide=self.hide_footer)
         ])
 
+    def to_html(self, state_dict=None, add_header=True):
+        args = self.get_state_args(state_dict)
+        args['binary'] = bool(args['binary'])
+        args['percentage'] = bool(args['percentage'])
+        fig = self.explainer.plot_confusion_matrix(cutoff=args['cutoff'], 
+                    binary=args['binary'], 
+                     pos_label=args['pos_label'])
+        
+        html = to_html.card(to_html.fig(fig), title=self.title, subtitle=self.subtitle)
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    
     def component_callbacks(self, app):
         @app.callback(
              Output('confusionmatrix-graph-'+self.name, 'figure'),
@@ -1415,6 +1455,15 @@ class ClassificationComponent(ExplainerComponent):
             ]), hide=self.hide_footer)
         ])
 
+    def to_html(self, state_dict=None, add_header=True):
+        args = self.get_state_args(state_dict)
+        fig = self.explainer.plot_classification()
+
+        html = to_html.card(to_html.fig(fig), title=self.title, subtitle=self.subtitle)
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    
     def component_callbacks(self, app):
         @app.callback(
             Output('classification-graph-'+self.name, 'figure'),
@@ -1502,6 +1551,15 @@ class RocAucComponent(ExplainerComponent):
             ]), hide=self.hide_footer)
         ])
 
+    def to_html(self, state_dict=None, add_header=True):
+        args = self.get_state_args(state_dict)
+        fig = self.explainer.plot_roc_auc(**args)
+        
+        html = to_html.card(fig.to_html(include_plotlyjs='cdn', full_html=False), title=self.title, subtitle=self.subtitle)
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    
     def component_callbacks(self, app):
         @app.callback(
             Output('rocauc-graph-'+self.name, 'figure'),
@@ -1600,10 +1658,13 @@ class PrAucComponent(ExplainerComponent):
             return self.explainer.plot_pr_auc(cutoff=cutoff, pos_label=pos_label)
 
 class ClassifierModelSummaryComponent(ExplainerComponent):
+    _state_props = dict(
+        cutoff=('clas-model-summary-cutoff-', 'value'),
+        pos_label=('pos-label-', 'value'))
     def __init__(self, explainer, title="Model performance metrics", name=None,
                     hide_title=False, hide_subtitle=False, hide_footer=True,
                     hide_cutoff=False, hide_selector=False,
-                    pos_label=None, cutoff=0.5, round=3, description=None,
+                    pos_label=None, cutoff=0.5, round=3, description=None,show_metrics=None,
                     **kwargs):
         """Show model summary statistics (accuracy, precision, recall,  
             f1, roc_auc, pr_auc, log_loss) component.
@@ -1675,6 +1736,22 @@ class ClassifierModelSummaryComponent(ExplainerComponent):
             ]), hide=self.hide_footer)
         ])
     
+    def to_html(self, state_dict=None, add_header=True):
+        args = self.get_state_args(state_dict)
+        metrics_df = self._get_metrics_df(args['cutoff'], args['pos_label'])
+        html = to_html.table_from_df(metrics_df)
+        html = to_html.card(html, title=self.title)
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    def _get_metrics_df(self, cutoff, pos_label):
+        metrics_df = (pd.DataFrame(
+                                self.explainer.metrics(cutoff=cutoff, pos_label=pos_label, 
+                                                        show_metrics=self.show_metrics), 
+                                index=["Score"])
+                              .T.rename_axis(index="metric").reset_index()
+                              .round(self.round))
+        return metrics_df
     def component_callbacks(self, app):
         @app.callback(
             Output('clas-model-summary-div-'+self.name, 'children'),
@@ -1698,4 +1775,614 @@ class ClassifierModelSummaryComponent(ExplainerComponent):
                 metrics_table,
                 *tooltips
             ])
+
         
+class ScatterComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Sactter", name=None,
+                    subtitle="How many false positives and false negatives?",
+                    **kwargs):
+
+        super().__init__(explainer, title, name)
+            
+            
+    def layout(self):
+        fig_pairplot=px.scatter_matrix(self.explainer.Dataset[self.explainer.columns_ranked_by_shap(cats=True)[:4]],  color=self.explainer.columns_ranked_by_shap(cats=True)[:4][-1],height=500)  
+        return dbc.Card([
+            dbc.CardHeader([html.H4('Correlation of whole Data')]),
+            dbc.CardBody([dbc.Form([dbc.FormGroup([
+                dbc.Label("Attributes:",style=dict(marginRight= 20)),
+                dcc.Dropdown(self.explainer.Dataset.columns[:-1],self.explainer.columns_ranked_by_shap(cats=True)[:4],id='dropDown',multi=True,style={'width': '100%'})])  ],inline=True), 
+                dcc.Graph(id='graph-data',figure=fig_pairplot,config=dict(modeBarButtons=[['toImage']], displaylogo=False)),
+            
+            ])])
+    def component_callbacks(self, app):
+        @app.callback(
+        Output('graph-data','figure'),
+        Input('dropDown','value'))
+
+
+        def dropDownFunction(value):
+            global bf
+            fig_pairplot=px.scatter_matrix(self.explainer.Dataset.columns, height=500)  
+            #si la valeur existe alors on créer une figure qui contient ces valeurs
+            if value!=None:
+                try:
+
+                    dff=self.explainer.Dataset[value]
+
+                    fig_pairplot=px.scatter_matrix(dff, color=dff.columns[-1], height=500)  
+                    return fig_pairplot
+                except Exception as e:
+                    print(e)
+            #sinon on affiche un graphique du dataframe
+            else:
+                fig_pairplot=px.scatter_matrix(self.explainer.Dataset[self.explainer.columns_ranked_by_shap(cats=True)[:4]],  color=self.explainer.columns_ranked_by_shap(cats=True)[:4][-1],height=500)  
+            return fig_pairplot
+
+    def to_html(self, state_dict=None, add_header=True):
+
+        fig_pairplot=px.scatter_matrix(self.explainer.Dataset[self.explainer.columns_ranked_by_shap(cats=True)[:4]],  color=self.explainer.columns_ranked_by_shap(cats=True)[:4][-1],height=500)  
+
+        html = to_html.fig(fig_pairplot)
+        if add_header:
+            return to_html.add_header(html)
+        return html
+        
+        
+        
+        
+        
+
+class SamplesComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Data samples", name=None,
+                    subtitle="How many false positives and false negatives?",
+                    **kwargs):
+
+        super().__init__(explainer, title, name)
+            
+            
+    def layout(self):
+        return dbc.Card([
+                dbc.CardHeader([html.H3("Dataset samples extract")]),
+                dbc.CardBody([dbc.Row([
+                dbc.Form([dbc.FormGroup([
+                            dbc.Label("Class:", id='classes-label-',style=dict(marginRight= 20)),
+                            dbc.Tooltip("Classes of features to display", 
+                                        target='classes-label-'),
+                            dcc.Dropdown(self.explainer.Dataset.iloc[:,-1].unique(),self.explainer.Dataset.iloc[:,-1].unique(),id='dropDownSample',multi=True),
+                             html.Br(),
+                     ])  ],inline=True)
+                
+                
+                
+                ]),
+                html.Br() ,
+                dbc.Row([  
+                    html.Div(
+                    # dbc.Table.from_dataframe(self.explainer.Dataset.head(10), striped=True, bordered=True, hover=True)
+                    dash_table.DataTable(
+                        data=self.explainer.Dataset.head(10).to_dict('records'),
+                        columns=[{'id': c, 'name': c} for c in self.explainer.Dataset.columns],
+                        page_action='none',
+                        style_table={'height': '500px', 'overflowY': 'auto'}
+                    )    
+                        
+                        
+                        
+                        
+                        ,id='tableSample',style={'width': '100%'}),])])])
+    
+    
+    def component_callbacks(self, app):
+        @app.callback(
+            Output('tableSample','children'),
+            Input('dropDownSample','value'))
+
+
+        def TableauSample(value):
+            global bf
+           #si rien n'est séléctionner on affiche les 10 premiers valeurs du dataframe
+            if value==None:
+                # return  dbc.Table.from_dataframe(self.explainer.Dataset.head(10), striped=True, bordered=True, hover=True)
+                return dash_table.DataTable(
+                        data=self.explainer.Dataset.head(10).to_dict('records'),
+                        columns=[{'id': c, 'name': c} for c in self.explainer.Dataset.columns],
+                        page_action='none',
+                        style_table={'height': '500px', 'overflowY': 'auto'}
+                    )
+            #Si on a plusieurs valeurs selectionner on afficheras 5 donnees de chaque classe séléctionner
+            elif len(value)>1:
+                try: 
+                    liste=pd.DataFrame(columns=self.explainer.Dataset.columns)
+                    for j in range(len(value)):
+                        a=0
+                        for i in range(len(self.explainer.Dataset)):
+                            if a<5:
+                                if self.explainer.Dataset.iloc[i,-1]== value[j]:
+
+                                    liste=liste.append(self.explainer.Dataset.loc[i],ignore_index=True)
+                                    a+=1
+                    # return dbc.Table.from_dataframe(liste, striped=True, bordered=True, hover=True)
+                    return dash_table.DataTable(
+                        data=liste.to_dict('records'),
+                        columns=[{'id': c, 'name': c} for c in liste.columns],
+                        page_action='none',
+                        style_table={'height': '500px', 'overflowY': 'auto'}
+                    )
+
+                    #dff=bf[value]
+
+                   # fig_pairplot=px.scatter_matrix(dff, color=dff.columns[-1], height=500,   title= 'Correlation of whole Data')  
+
+                except Exception as e:
+                    print(e)
+                    #Si on à que 1 classe séléctionné alors on affiche 10 valeurs de la classe séléctionné
+            elif len(value)==1:
+                liste=pd.DataFrame(columns=self.explainer.Dataset.columns)
+
+                for i in range(len(self.explainer.Dataset)):
+
+                    if self.explainer.Dataset.iloc[i,-1]== value:
+
+                        liste=liste.append(self.explainer.Dataset.loc[i],ignore_index=True)
+                return dash_table.DataTable(
+                        data=liste.head(10).to_dict('records'),
+                        columns=[{'id': c, 'name': c} for c in liste.columns],
+                        page_action='none',
+                        style_table={'height': '500px', 'overflowY': 'auto'}
+                    )
+
+            else:
+                #fig_pairplot=px.scatter_matrix(bf,  color=bf.columns[-1],height=500,   title= 'Correlation of whole Data')  
+                return  dash_table.DataTable(
+                        data=self.explainer.Dataset.head(10).to_dict('records'),
+                        columns=[{'id': c, 'name': c} for c in self.explainer.Dataset.columns],
+                        page_action='none',
+                        style_table={'height': '500px', 'overflowY': 'auto'}
+                    )
+            
+            
+            
+            
+class MissComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Missing values", name=None,
+                    subtitle="How many false positives and false negatives?",
+                    **kwargs):
+
+        super().__init__(explainer, title, name)
+            
+            
+    def layout(self):
+  
+        # missbff=self.explainer.Dataset.copy()
+        missbff=pd.read_csv("TestData.csv")
+        if 'Ligne' not in missbff.columns:
+            print('im heere')
+            missbff.insert(loc=0, column='Ligne', value=missbff.index) 
+        print('im ouuut')
+        # global listNull
+        listNull=pd.DataFrame(columns=missbff.columns)
+        #liste sera utilisé pour récupérer le numéro de la ligne
+
+        #boucle qui parcourt le dataframe afin d'obtenir les lignes avec des valeurs manquantes
+        for i in range(len(missbff)):
+            for column in missbff:
+                if isinstance(missbff.at[i,column],float) :
+                    if math.isnan(missbff.at[i,column]):
+                        listNull=listNull.append(missbff.loc[i],ignore_index=True)
+
+        #création du tableau dynamique des valeurs null
+        print('im ouuut2')
+        dfNull=missbff.loc[:, missbff.columns != 'Ligne'].isnull().sum() # dfNull prend le nombres de valeurs null par colonnes
+        print('im ouuut3') 
+        col_contain_nul=['Ligne']+listNull.columns[listNull.isnull().any()].tolist()
+        fig = px.bar(dfNull, x=dfNull.index, y=dfNull,labels={'index':"Attribute", 'y':"Number of missing values"},)            
+        return dbc.Card([
+                            dbc.CardHeader([
+                                html.H4("Missing Values", className="card-title")]),
+                                 dbc.CardBody([
+                                     dbc.Row([
+                                         dbc.Col([html.Div(
+                                            # dbc.Table.from_dataframe(listNull, striped=True, bordered=True, hover=True),
+                                         
+                                         dash_table.DataTable(
+    data=listNull.to_dict('records'),
+    
+    columns=[{'id': c, 'name': c} for c in col_contain_nul],
+                                             sort_action='native',
+                                             
+                                             style_data={
+        'color': 'black',
+        'backgroundColor': 'white'
+    },
+    style_data_conditional=[
+        
+{
+                    'if': {
+                        'filter_query': '{{{}}} is blank'.format(col),
+                        'column_id': col
+                    },
+                    'backgroundColor': 'tomato',
+                    'color': 'white'
+                } for col in listNull.columns
+        
+        
+        
+    ],
+    style_header={
+        'backgroundColor': 'rgb(210, 210, 210)',
+        'color': 'black',
+        'fontWeight': 'bold'
+    },
+    page_size=10
+)
+                                         
+                                         )
+                                             
+                                         ], width=6),
+                                         dbc.Col([html.Div(
+                                             dcc.Graph(id='graph-data-miss',figure=fig,config=dict(modeBarButtons=[['toImage']], displaylogo=False)),)
+                                         ])
+                                    ]),])])
+             
+            
+class duplicatedComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Missing values", name=None,
+                    subtitle="How many false positives and false negatives?",
+                    **kwargs):
+
+        super().__init__(explainer, title, name)
+            
+            
+    def layout(self):
+        duplDF=self.explainer.Dataset[self.explainer.Dataset.duplicated(keep=False)] #prend les lignes similaires 
+        duplDF.insert(loc=0, column='Ligne', value=duplDF.index) #on ajoutes les indexs
+   
+        return  dbc.Card([
+                        dbc.CardHeader([ html.H3("Duplicated rows"),]),
+                        dbc.CardBody([
+                
+                    dash_table.DataTable(
+    data=duplDF.to_dict('records'),
+    columns=[{'id': c, 'name': c} for c in duplDF.columns],style_data={
+        'color': 'black',
+        'backgroundColor': 'white'
+    },
+    style_data_conditional=[
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': 'rgb(220, 220, 220)',
+        }
+    ],
+    style_header={
+        'backgroundColor': 'rgb(210, 210, 210)',
+        'color': 'black',
+        'fontWeight': 'bold'
+    },
+    page_size=10
+)
+                            # dbc.Table.from_dataframe(duplDF, striped=True, bordered=True, hover=True)
+                   
+                ])])
+
+
+
+class OverviewComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Overview", name=None,
+                    subtitle="How many false positives and false negatives?",
+                    **kwargs):
+
+        super().__init__(explainer, title, name)
+        
+        
+    def layout(self):
+        ds=self.explainer.Dataset
+        n_var = ds.shape[1]
+        n_obs = ds.shape[0]
+        n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
+        n_classes = ds.iloc[:, -1].nunique()
+        dup_rows =len(ds)-len(ds.drop_duplicates())
+        #varibales (data type) infos
+        Numeric = ds.select_dtypes(include='number').shape[1]
+        Categorical = ds.select_dtypes(include='object').shape[1]
+        Boolean = ds.select_dtypes(include='bool').shape[1]
+        Date = ds.select_dtypes(include='datetime64').shape[1]
+        Unsupported = 0            
+        global dsInfo, varInfo # les variable dsInfo et varInfo sont utilisé pour les informations du dataframe 
+        dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
+        varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
+        
+        data = [{'values': ds.iloc[:,-1].value_counts(),'label':ds.iloc[:,-1].unique(),'type': 'pie',}, ]
+            
+        # data = [{
+        #     'values': [10,30,60],
+        #     'type': 'pie'}]
+        
+        ds_info = pd.DataFrame({
+                    " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
+                   "  ": dsInfo,})
+        
+        vr_type = pd.DataFrame({
+                    " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
+                   "  ": varInfo,})
+        hide_dup= True if dsInfo[4]==0 else False
+        hide_miss=True if dsInfo[3]==0 else False
+        return dbc.Row([     
+
+                         dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([
+
+                                                html.H4("Dataset info", className="card-title"),
+                                                html.Div([dbc.Badge("Warning", color="warning",className="ml-1")], style={"float": "right"}),
+
+                                        ])  ,
+                                    #tableau pour les info du dataset
+                                    dbc.CardBody([
+                                        dbc.Table.from_dataframe(ds_info, striped=True, bordered=True, hover=True,id='table'),
+
+                                        #graphique de distribution des classe
+                                        dcc.Graph(
+                                            id='graph',
+                                            figure={ 'data': data ,"layout": {"title": "Classes distribution","height": 400,  # px
+                                            }, }
+                                        #    }, }
+                                        ), 
+
+                                            ],id='card')
+                                    ])
+                                ]),
+                           
+                        
+            dbc.Col([
+                                dbc.Card([
+                                    dbc.CardHeader([html.H4("Data type", className="card-title"),
+                                                    ]),
+                                    dbc.CardBody([#tableau pour le type des colonnes
+                                    dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
+                                                
+                                       
+                      html.Div([#les différent warning
+                                    html.H4("Warnings"),
+                        make_hideable(dbc.Alert(["Dataset has ", html.A(dsInfo[4], href="#", className="alert-link"),
+                        html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
+                        " duplicate rows ",
+                         html.Button('Drop dupplicate rows', id='submit-dupl', n_clicks=0, className="btn btn-outline-warning", style={"float": "right"}), 
+                        dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),hide=hide_dup),
+
+
+                        make_hideable(dbc.Alert(["Dataset has ", html.A(dsInfo[3], href="#", className="alert-link"),
+                        html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",),
+                        " missing values ",
+                        #html.Button('Compléter les valeurs manquantes', id='submit-val', n_clicks=0, className="btn btn-outline-warning"), 
+                            #dcc.Download(id="download-text")
+                            ], id="alert-auto",color="info",is_open=True),hide=hide_miss), 
+
+                         dbc.Alert(["Your ",html.A('unbalanced dataset', href="#", className="alert-link"),
+                        " will bias the prediction model towards the more common class!" ],color="warning",is_open=True),
+
+                        ],id="warnings") ])])
+                                ]), 
+                        
+                        
+              ])
+    
+        #méthode qui s'effectue lors de l'appuie sur le boutoun pour supprimer les duplicate rows
+    def component_callbacks(self, app):
+        @app.callback(
+            Output('download-dupl', 'data'), Input('submit-dupl', 'n_clicks'), prevent_initial_call=True)
+        
+        
+        def displayClickDupl(n_clicks):
+            bf=self.explainer.Dataset.drop_duplicates(ignore_index=True)
+            print("im in the controller")
+            return dcc.send_data_frame(bf.to_csv, "cleaned_data.csv")
+        
+        
+class PrecisionComponent(ExplainerComponent):
+    def __init__(self, explainer, title="Precision Plot", name=None,
+                    subtitle="Does fraction positive increase with predicted probability?",
+                    hide_title=False, hide_subtitle=False, hide_footer=False,
+                    hide_cutoff=False, hide_binsize=False, hide_binmethod=False,
+                    hide_multiclass=False, hide_selector=False, pos_label=None,
+                    bin_size=0.1, quantiles=10, cutoff=0.5,
+                    quantiles_or_binsize='bin_size', multiclass=False, description=None, 
+                    **kwargs):
+        """Shows a precision graph with toggles.
+
+        Args:
+            explainer (Explainer): explainer object constructed with either
+                        ClassifierExplainer() or RegressionExplainer()
+            title (str, optional): Title of tab or page. Defaults to 
+                        "Precision Plot".
+            name (str, optional): unique name to add to Component elements. 
+                        If None then random uuid is generated to make sure 
+                        it's unique. Defaults to None.
+            subtitle (str): subtitle
+            hide_title (bool, optional): hide title
+            hide_subtitle (bool, optional): Hide subtitle. Defaults to False.
+            hide_footer (bool, optional): hide the footer at the bottom of the component
+            hide_cutoff (bool, optional): Hide cutoff slider. Defaults to False.
+            hide_binsize (bool, optional): hide binsize/quantiles slider. Defaults to False.
+            hide_selector(bool, optional): hide pos label selector. Defaults to False.
+            hide_binmethod (bool, optional): Hide binsize/quantiles toggle. Defaults to False.
+            hide_multiclass (bool, optional): Hide multiclass toggle. Defaults to False.
+            hide_selector (bool, optional): Hide pos label selector. Default to True.
+            pos_label ({int, str}, optional): initial pos label. Defaults to explainer.pos_label
+            bin_size (float, optional): Size of bins in probability space. Defaults to 0.1.
+            quantiles (int, optional): Number of quantiles to divide plot. Defaults to 10.
+            cutoff (float, optional): Cutoff to display in graph. Defaults to 0.5.
+            quantiles_or_binsize (str, {'quantiles', 'bin_size'}, optional): Default bin method. Defaults to 'bin_size'.
+            multiclass (bool, optional): Display all classes. Defaults to False.
+            description (str, optional): Tooltip to display when hover over
+                component title. When None default text is shown. 
+        """
+        super().__init__(explainer, title, name)
+
+        self.cutoff_name = 'precision-cutoff-' + self.name
+
+        self.selector = PosLabelSelector(explainer, name=self.name, pos_label=pos_label)
+        if self.description is None: self.description = f"""
+        On this plot you can see the relation between the predicted probability
+        that a {self.explainer.index_name} belongs to the positive class, and
+        the percentage of observed {self.explainer.index_name} in the positive class.
+        The observations get binned together in groups of roughly 
+        equal predicted probabilities, and the percentage of positives is calculated
+        for each bin. A perfectly calibrated model would show a straight line
+        from the bottom left corner to the top right corner. A strong model would
+        classify most observations correctly and close to 0% or 100% probability.
+        """
+        self.register_dependencies("preds", "pred_probas", "pred_percentiles")
+
+    def layout(self):
+        return dbc.Card([
+            make_hideable(
+                dbc.CardHeader([
+                    html.Div([
+                        html.H3(self.title, id='precision-title-'+self.name, className="card-title"),
+                        make_hideable(html.H6(self.subtitle, className='card-subtitle'), hide=self.hide_subtitle),
+                        dbc.Tooltip(self.description, target='precision-title-'+self.name),
+                    ]), 
+                ]), hide=self.hide_title),
+            dbc.CardBody([
+                dbc.Row([
+                    make_hideable(
+                        dbc.Col([self.selector.layout()], width=3), hide=self.hide_selector)
+                ], justify="end"),
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            dcc.Graph(id='precision-graph-'+self.name,
+                                config=dict(modeBarButtons=[['toImage']], displaylogo=False)),
+                        ], style={'margin': 0}),
+                    ])
+                ]),
+            ]),
+            make_hideable(
+            dbc.CardFooter([
+                dbc.Row([
+                    dbc.Col([
+                        make_hideable(
+                            html.Div([
+                                html.Div([
+                                    dbc.Label('Bin size:', html_for='precision-binsize-'+self.name),
+                                    html.Div([
+                                        dcc.Slider(id='precision-binsize-'+self.name, 
+                                                min = 0.01, max = 0.5, step=0.01, value=self.bin_size,
+                                                marks={0.01: '0.01', 0.05: '0.05', 0.10: '0.10',
+                                                    0.20: '0.20', 0.25: '0.25' , 0.33: '0.33', 
+                                                    0.5: '0.5'}, 
+                                                included=False,
+                                                tooltip = {'always_visible' : False})
+                                    ], style={'margin-bottom': 5}),
+                                ], id='precision-bin-size-div-'+self.name, style=dict(margin=5)),
+                                dbc.Tooltip("Size of the bins to divide prediction score by", 
+                                        target='precision-bin-size-div-'+self.name,
+                                        placement='bottom'),
+                            ]), hide=self.hide_binsize),
+                        make_hideable(
+                            html.Div([
+                            html.Div([
+                                dbc.Label('Quantiles:', html_for='precision-quantiles-'+self.name),
+                                html.Div([
+                                    dcc.Slider(id='precision-quantiles-'+self.name, 
+                                                min = 1, max = 20, step=1, value=self.quantiles,
+                                                marks={1: '1', 5: '5', 10: '10', 15: '15', 20:'20'}, 
+                                                included=False,
+                                                tooltip = {'always_visible' : False}),
+                                ], style={'margin-bottom':5}),
+                            ], id='precision-quantiles-div-'+self.name), 
+                            dbc.Tooltip("Number of equally populated bins to divide prediction score by", 
+                                        target='precision-quantiles-div-'+self.name,
+                                        placement='bottom'),
+                            ]), hide=self.hide_binsize),
+                        make_hideable(
+                            html.Div([
+                            html.Div([
+                                html.Label('Cutoff prediction probability:'),
+                                dcc.Slider(id='precision-cutoff-'+self.name, 
+                                            min = 0.01, max = 0.99, step=0.01, value=self.cutoff,
+                                            marks={0.01: '0.01', 0.25: '0.25', 0.50: '0.50',
+                                                    0.75: '0.75', 0.99: '0.99'}, 
+                                            included=False,
+                                            tooltip = {'always_visible' : False}),
+                            ], id='precision-cutoff-div-'+self.name),
+                            dbc.Tooltip(f"Scores above this cutoff will be labeled positive",
+                                            target='precision-cutoff-div-'+self.name,
+                                            placement='bottom'),
+                            ], style={'margin-bottom': 5}), hide=self.hide_cutoff),
+                    ]),
+                ]),
+                dbc.Row([
+                    make_hideable(
+                        dbc.Col([
+                            dbc.Label('Binning Method:', html_for='precision-binsize-or-quantiles-'+self.name),
+                            dbc.Select(
+                                id='precision-binsize-or-quantiles-'+self.name,
+                                options=[
+                                    {'label': 'Bins', 
+                                    'value': 'bin_size'},
+                                    {'label': 'Quantiles', 
+                                    'value': 'quantiles'}
+                                ],
+                                value=self.quantiles_or_binsize,
+                                ),
+                            dbc.Tooltip("Divide the x-axis by equally sized ranges of prediction scores (bins),"
+                                        " or bins with the same number of observations (counts) in each bin: quantiles",
+                                        target='precision-binsize-or-quantiles-'+self.name),     
+                        ], width=4), hide=self.hide_binmethod),
+                    make_hideable(
+                        dbc.Col([
+                            dbc.FormGroup([
+                                dbc.Label("Multi class:", id="precision-multiclass-label-"+self.name),
+                                dbc.Tooltip("Display the observed proportion for all class"
+                                            " labels, not just positive label.", 
+                                            target="precision-multiclass-"+self.name),
+                                dbc.Checklist(
+                                    options=[{"label":  "Display all classes", "value": True}],
+                                    value=[True] if self.multiclass else [],
+                                    id='precision-multiclass-'+self.name,
+                                    inline=True,
+                                    switch=True,
+                                ),
+                            ]),
+                        ], width=4), hide=self.hide_multiclass), 
+                ]),
+            ]), hide=self.hide_footer)   
+        ])
+
+    def component_callbacks(self, app):
+        @app.callback(
+            [Output('precision-bin-size-div-'+self.name, 'style'),
+             Output('precision-quantiles-div-'+self.name, 'style')],
+            [Input('precision-binsize-or-quantiles-'+self.name, 'value')],
+        )
+        def update_div_visibility(bins_or_quantiles):
+            if self.hide_binsize:
+                return dict(display='none'), dict(display='none')
+            if bins_or_quantiles=='bin_size':
+                return {}, dict(display='none')
+            elif bins_or_quantiles=='quantiles':
+                return dict(display='none'), {}
+            raise PreventUpdate   
+
+        @app.callback(
+            Output('precision-graph-'+self.name, 'figure'),
+            [Input('precision-binsize-'+self.name, 'value'),
+             Input('precision-quantiles-'+self.name, 'value'),
+             Input('precision-binsize-or-quantiles-'+self.name, 'value'),
+             Input('precision-cutoff-'+self.name, 'value'),
+             Input('precision-multiclass-'+self.name, 'value'),
+             Input('pos-label-'+self.name, 'value')],
+            #[State('tabs', 'value')],
+        )
+        def update_precision_graph(bin_size, quantiles, bins, cutoff, multiclass, pos_label):
+            if bins == 'bin_size':
+                return self.explainer.plot_precision(
+                    bin_size=bin_size, cutoff=cutoff, 
+                    multiclass=bool(multiclass), pos_label=pos_label)
+            elif bins == 'quantiles':
+                return self.explainer.plot_precision(
+                    quantiles=quantiles, cutoff=cutoff, 
+                    multiclass=bool(multiclass), pos_label=pos_label)
+            raise PreventUpdate

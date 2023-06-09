@@ -22,6 +22,8 @@ import oyaml as yaml
 import shortuuid
 
 import dash
+from dash import html, dcc, Input, Output, State
+
 import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
@@ -37,6 +39,7 @@ import plotly.io as pio
 from .dashboard_components import *
 from .dashboard_tabs import *
 from .AMLBID_Explainer import BaseExplainer
+from . import to_html
 
 
 
@@ -82,15 +85,17 @@ def instantiate_component(component, explainer, name=None, **kwargs):
         raise ValueError(f"{component} is not a valid component...")
 
 
-class ExplainerTabsLayout:
+class ExplainerTabsLayout(ExplainerComponent):
     def __init__(self, explainer, tabs,
                  title='Model Explainer',
                  description=None,
                  header_hide_title=False,
                  header_hide_selector=False,
+                 header_hide_download=False,
                  block_selector_callbacks=False,
                  pos_label=None,
                  fluid=True,
+                 name=None,
                  **kwargs):
         """Generates a multi tab layout from a a list of ExplainerComponents.
         If the component is a class definition, it gets instantiated first. If 
@@ -114,6 +119,7 @@ class ExplainerTabsLayout:
                         Defaults to explainer.pos_label
             fluid (bool, optional): Stretch layout to fill space. Defaults to False.
         """
+        self.name=""
         self.title = title
         self.description = description
         self.header_hide_title = header_hide_title
@@ -127,6 +133,12 @@ class ExplainerTabsLayout:
         self.tabs  = [instantiate_component(tab, explainer, name=str(i+1), **kwargs) for i, tab in enumerate(tabs)]
         assert len(self.tabs) > 0, 'When passing a list to tabs, need to pass at least one valid tab!'
 
+
+        self.downloadable_tabs = [tab for tab in self.tabs if tab.to_html(add_header=False) != "<div></div>"]
+        if not self.downloadable_tabs:
+            self.header_hide_download = True
+            
+            
         self.connector = PosLabelConnector(self.selector, self.tabs)
    
     def layout(self):
@@ -146,10 +158,44 @@ class ExplainerTabsLayout:
                         self.selector.layout()
                     ],md=6), hide=True),
             ], justify="start", style=dict(marginBottom=10)),
+            
+            
+            
+            
+                            make_hideable(
+                    dbc.Col([
+                        html.Div([
+                            # dbc.Button('&#xf556', id="download-button-all"+self.name, n_clicks=None, size="sm"),
+                            html.Button(id="download-button-all"+self.name, n_clicks=None, style={"border": "none","border-radius": "30px","width":"38px","height":"38px","back-ground-color":"red","background-image": "url(./assets/share_.png)"}),
+                            dbc.Tooltip(f"Export the dashboard as a dynamique HTML report",target="download-button-all",placement="left",
+                                    style={"width":"300px"}),
+                            dcc.Download('download-page-'+self.name),
+                            # dbc.DropdownMenu([
+                            #         dbc.DropdownMenuItem("All tabs", id="download-button-all"+self.name, n_clicks=None), 
+                            #         dbc.DropdownMenuItem(divider=True), 
+                            #         *[dbc.DropdownMenuItem(tab.title, id="download-button-"+tab.name, n_clicks=None)
+                            #                 for tab in self.downloadable_tabs]
+                            #     ], label="Export Dash", color="link", right=True),
+                        ], style={"float": "right","position": "fixed", "zIndex":100 ,"top":100,"right":0, "bottom": 0, "font-weight": 400})
+                    ], md="auto", className="ml-auto", align="center"), hide=False),
+            
+
+            
+            
+            
             dcc.Tabs(id="tabs", value=self.tabs[0].name, 
                         children=[dcc.Tab(label=tab.title, id=tab.name, value=tab.name,
                                         children=tab.layout()) for tab in self.tabs]),
         ], fluid=self.fluid)
+    
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.title(self.title)
+        tabs = {tab.title: tab.to_html(state_dict, add_header=False) for tab in self.tabs}
+        tabs = {tab: html for tab, html in tabs.items() if html != "<div></div>"}
+        html += to_html.tabs(tabs)
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
     def register_callbacks(self, app):
         """Registers callbacks for all tabs"""
@@ -165,7 +211,35 @@ class ExplainerTabsLayout:
                     "This may clash with the global pos label selector and generate duplicate callback errors. "
                     "If so set block_selector_callbacks=True.")
             self.connector.register_callbacks(app)
+            
+        @app.callback(
+            Output('download-page-'+self.name, 'data'),
+            [Input('download-button-all'+self.name, 'n_clicks')],
+             # *[Input("download-button-"+tab.name, 'n_clicks') for tab in self.downloadable_tabs]],
+            [State(id_, prop_) for id_, prop_ in self.get_state_tuples()]
+        )
+        
+        def download_html(*args):
+            state_dict = dict(zip(self.get_state_tuples(), args[1+len(self.downloadable_tabs):]))
+            
+            ctx = dash.callback_context
+            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            if button_id == 'download-button-all'+self.name:
+                return dict(
+                    content=self.to_html(state_dict), 
+                    filename="dashboard.html"
+                )
+            for tab in self.downloadable_tabs:
+                if button_id == "download-button-"+tab.name:
+                    return dict(
+                        content=tab.to_html(state_dict), 
+                        filename="dashboard.html"
+                    )
+            raise PreventUpdate
 
+            
+
+            
     def calculate_dependencies(self):
         """Calculates dependencies for all tabs"""
         for tab in self.tabs:
@@ -268,10 +342,10 @@ class ExplainerDashboard:
                  title='AMLBID Explainer',
                  name=None,
                  description=None,
-                 hide_header=False,
-                 header_hide_title=False,
-                 header_hide_selector=False,
-                 block_selector_callbacks=False,
+                 hide_header=True,
+                 header_hide_title=True,
+                 header_hide_selector=True,
+                 block_selector_callbacks=True,
                  pos_label=None,
                  fluid=True,
                  mode="dash",
@@ -283,7 +357,7 @@ class ExplainerDashboard:
                  url_base_pathname=None,
                  responsive=True,
                  logins=None,
-                 port=8889, #8050
+                 port=8050,
                  importances=True,
                  model_summary=True,
                  contributions=True,
@@ -449,6 +523,12 @@ class ExplainerDashboard:
             if decision_trees and not hasattr(explainer, 'is_tree_explainer'):
                 #print("The explainer object has no decision_trees property. so setting decision_trees=False...", flush=True)
                 decision_trees = False
+            
+            #Thibault 2022 AYAAAA
+            tabs.append(ImportComposite)
+
+            tabs.append(DataProfilingmed)
+            #tabs.append(ExportDash)
             tabs.append(Testcomposite) 
             #tabs.append(SuggestedModelComposite)
             #tabs.append(Testcomposite)
@@ -472,6 +552,7 @@ class ExplainerDashboard:
                 tabs.append(DecisionTreesComposite)
             
             tabs.append(RefinementComposite)
+            
 
         if isinstance(tabs, list) and len(tabs)==1:
             tabs = tabs[0]
@@ -822,16 +903,16 @@ class ExplainerDashboard:
                 from waitress import serve
                 serve(self.app.server, host='0.0.0.0', port=port)
             else:
-                self.app.run_server(port=port, **kwargs)
+                self.app.run_server(port=port,debug=False, **kwargs)
         elif self.mode == 'external':
             if not self.is_colab:
                 #print(f"Starting ExplainerDashboard on http://localhost:{port}\n", flush=True)
                 pass
-            self.app.run_server(port=port, mode=self.mode, **kwargs)
+            self.app.run_server(port=port, mode=self.mode,debug=False, **kwargs)
         elif self.mode in ['inline', 'jupyterlab']:
             print(f"Starting ExplainerDashboard inline (terminate it with "
                   f"ExplainerDashboard.terminate({port}))", flush=True)
-            self.app.run_server(port=port, mode=self.mode, 
+            self.app.run_server(port=port, mode=self.mode, debug=False,
                                 width=self.width, height=self.height, **kwargs)
         else:
             raise ValueError(f"Unknown mode: {mode}...")
@@ -1573,9 +1654,9 @@ class InlineExplainer:
         """
         pio.templates.default = "none"
         if self._mode in ['inline', 'jupyterlab']:
-            app.run_server(mode=self._mode, width=self._width, height=self._height, port=self._port)
+            app.run_server(mode=self._mode, width=self._width, height=self._height,debug=False, port=self._port)
         elif self._mode == 'external':
-             app.run_server(mode=self._mode, port=self._port, **self._kwargs)
+             app.run_server(mode=self._mode, port=self._port,debug=False, **self._kwargs)
         else:
             raise ValueError("mode should either be 'inline', 'jupyterlab'  or 'external'!")
 

@@ -39,7 +39,7 @@ pio.templates.default = "none"
 
 class BaseExplainer(ABC):
     """ """
-    def __init__(self, model,recommended_config, X, y=None, permutation_metric=r2_score, 
+    def __init__(self, model,recommended_config,Dataset, X, y=None, permutation_metric=r2_score, 
                     shap="guess", X_background=None, model_output="raw",
                     cats=None, idxs=None, index_name=None, target=None,
                     descriptions=None, 
@@ -86,7 +86,7 @@ class BaseExplainer(ABC):
         self._params_dict = dict(
             shap=shap, model_output=model_output, cats=cats, 
             descriptions=descriptions, target=target, n_jobs=n_jobs, 
-            permutation_cv=n_jobs, na_fill=na_fill, recommended_config=recommended_config)
+            permutation_cv=n_jobs, na_fill=na_fill, recommended_config=recommended_config, Dataset=Dataset)
 
         if isinstance(model, Pipeline):
             self.X, self.model = split_pipeline(model, X)
@@ -138,7 +138,7 @@ class BaseExplainer(ABC):
             self.idxs = X.index.astype(str)
         self.X.index = self.idxs
         self.y.index = self.idxs
-
+        self._get_index_list_func = None
         if index_name is None:
             if self.idxs.name is not None:
                 self.index_name = self.idxs.name.capitalize()
@@ -159,6 +159,7 @@ class BaseExplainer(ABC):
         self.is_regression = False
         self.interactions_should_work = True
         self.recommended_config=recommended_config
+        self.Dataset=Dataset
         _ = self.shap_explainer
 
     @classmethod
@@ -306,6 +307,15 @@ class BaseExplainer(ABC):
         if col2 in self.columns_cats and not col1 in self.columns_cats:
             raise ValueError(
                 f"{col2} is categorical but {col1} is not in columns_cats")
+    
+    def get_index_list(self):
+        if self._get_index_list_func is not None:
+            if not hasattr(self, '_index_list'):
+                self._index_list = pd.Index(self._get_index_list_func())
+            return self._index_list
+        else:
+            return self.idxs
+
 
     @property
     def shap_explainer(self):
@@ -1559,7 +1569,7 @@ class BaseExplainer(ABC):
 
 class ClassifierExplainer(BaseExplainer):
     """ """
-    def __init__(self, model,recommended_config , X, y=None,  permutation_metric=roc_auc_score, 
+    def __init__(self, model,recommended_config ,Dataset, X, y=None,  permutation_metric=roc_auc_score, 
                     shap='guess', X_background=None, model_output="probability",
                     cats=None, idxs=None, index_name=None, target=None,
                     descriptions=None, n_jobs=None, permutation_cv=None, na_fill=-999,
@@ -1581,7 +1591,7 @@ class ClassifierExplainer(BaseExplainer):
             pos_label: class that should be used as the positive class, 
                         defaults to 1
         """
-        super().__init__(model,recommended_config, X, y, permutation_metric, 
+        super().__init__(model,recommended_config,Dataset, X, y, permutation_metric, 
                             shap, X_background, model_output, 
                             cats, idxs, index_name, target, descriptions, 
                             n_jobs, permutation_cv, na_fill)
@@ -1602,12 +1612,15 @@ class ClassifierExplainer(BaseExplainer):
             self.labels = [str(i) for i in range(self.y.nunique())]
         self.pos_label = pos_label
         self.is_classifier = True
-        if str(type(self.model)).endswith("RandomForestClassifier'>"):
+        if safe_isinstance(self.model, "RandomForestClassifier", "ExtraTreesClassifier"):
+            #print(f"Detected RandomForestClassifier model: "
+                #    "Changing class type to RandomForestClassifierExplainer...", 
+                 #   flush=True)
             self.__class__ = RandomForestClassifierExplainer 
         if str(type(self.model)).endswith("XGBClassifier'>"):
-            print(f"Detected XGBClassifier model: "
-                    "Changing class type to XGBClassifierExplainer...", 
-                    flush=True)
+            #print(f"Detected XGBClassifier model: "
+             #       "Changing class type to XGBClassifierExplainer...", 
+             #       flush=True)
             self.__class__ = XGBClassifierExplainer
 
     @property
@@ -3220,9 +3233,17 @@ class RandomForestRegressionBunch:
     def __init__(self, *args, **kwargs):
         raise ValueError("RandomForestRegressionBunch has been deprecated, use RandomForestRegressionExplainer instead...")
 
+        
+        
+
+
+
+
 
 from .AMLBID_Dashboard import *
 def explain(model,conf, X_test, Y_test):
-    explainer = ClassifierExplainer(model,conf, X_test, Y_test)
-    db = ExplainerDashboard(explainer, mode='external',dev_tools_props_check=False)
+    dataset=conf[1]
+    explainer = ClassifierExplainer(model,conf[0],conf[1], X_test, Y_test)
+    db = ExplainerDashboard(explainer, mode='external',dev_tools_props_check=False ,debug=False)
     return db
+

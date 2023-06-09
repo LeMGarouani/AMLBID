@@ -1,4 +1,5 @@
 __all__ = [
+    'ImportComposite' ,
     'ImportancesComposite',
     'ClassifierModelStatsComposite',
     'RegressionModelStatsComposite',
@@ -10,12 +11,16 @@ __all__ = [
     'Testcomposite',
     'SuggestedModelComposite',
     'RefinementComposite',
+    'DataProfiling',
+    'DataProfilingmed',
+    'ExportDash'
 ]
+
+import socket
 import os.path
 import pandas as pd
 import dash_bootstrap_components as dbc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash
 from ..AMLBID_Explainer import RandomForestExplainer, XGBExplainer
@@ -28,11 +33,73 @@ from .shap_components import *
 from .decisiontree_components import *
 from dash.dependencies import Input, Output, State
 from .ConfGenerator import *
+from .. import to_html
 
+
+
+class ImportComposite(ExplainerComponent):
+    # Composite responsible for the first item in the page, with a button allowing to upload a file from the user's computer
+    def __init__(self, explainer, title="Document selection", name=None,
+                    hide_title=False, hide_selector=False, 
+                    hide_globalcutoff=False,
+                    hide_modelsummary=False, hide_confusionmatrix=False,
+                    hide_precision=False, hide_classification=False,
+                    hide_rocauc=False, hide_prauc=False,
+                    hide_liftcurve=False, hide_cumprecision=False,
+                    pos_label=None,
+                    bin_size=0.1, quantiles=10, cutoff=0.5, **kwargs):
+
+        super().__init__(explainer, title, name)
+
+
+    def layout(self):
+        return html.Div([
+            dcc.Upload(
+                id='upload-file',
+                children=html.Div(['Drag and Drop or ',html.A('Select Files')]),
+                style={
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin': '10px'
+                },
+                multiple=True
+            ),
+            html.Div(id='output-file')
+        ])
+    
+    def component_callbacks(self, app) : 
+        @app.callback(Output('output-file', 'children'),[Input('upload-file', 'filename'),Input('upload-file', 'contents')])
+        def update_output(filename, contents):
+            if contents is not None:
+                content_string = ''.join(contents)
+                content_type, content_string = content_string.split(',')
+                decoded = base64.b64decode(content_string)
+                df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+                filename = filename[0]
+                socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                Data,X_train,Y_train,X_test,Y_test=load_data(filename)
+                AMLBID,Config=AMLBID_Recommender.recommend(Data, metric="Accuracy", mode="Recommender_Explainer")
+                AMLBID.fit(X_train, Y_train)
+                Explainer = AMLBID_Explainer.explain(AMLBID,Config, X_test, Y_test)
+                Explainer.run(port = 8050)
+                
+                return html.Div('CSV file uploaded and processed')
+            else:
+                return html.Div('Please upload a file')
+    
+    
+    
+#--------------------------------------------------------------------------------------------------------
+    
 class ImportancesComposite(ExplainerComponent):
-    def __init__(self, explainer, title="Feature Importances", name=None,
-                    hide_importances=False,
-                    hide_selector=True, **kwargs):
+    def __init__(self, explainer, title="Features Dependence", name=None,
+                    hide_importances=True,hide_title=True,
+                    hide_selector=True,depth=None, **kwargs):
         """Overview tab of feature importances
 
         Can show both permutation importances and mean absolute shap values.
@@ -51,13 +118,19 @@ class ImportancesComposite(ExplainerComponent):
         """
         super().__init__(explainer, title, name)
 
-        #self.importances = ImportancesComponent(
-                #explainer, name=self.name+"0", hide_selector=hide_selector, **kwargs)
+        self.importances = ImportancesComponent(
+                explainer, name=self.name+"0", hide_selector=hide_selector, **kwargs)
+        
+        self.shap_summary = ShapSummaryComponent(
+                    explainer, name=self.name+"0",
+                    **update_params(kwargs, hide_selector=hide_selector, depth=5, hide_cats=True,hide_title=True))
+        self.shap_dependence = ShapDependenceComponent(
+                    explainer, name=self.name+"1",
+                    hide_selector=hide_selector,**update_params(kwargs,  hide_cats=True,hide_title=False))
+        self.connector = ShapSummaryDependenceConnector(
+                    self.shap_summary, self.shap_dependence)
+        
 
-        self.shap_summary = ShapSummaryComponent(explainer,name=self.name+"1",
-                                hide_title=True, hide_selector=True,
-                                hide_depth=False, depth=5,
-                                hide_cats=True)
         self.register_components()
 
     def layout(self):
@@ -66,7 +139,7 @@ class ImportancesComposite(ExplainerComponent):
                 dbc.CardDeck([
                 dbc.Card([
                 dbc.CardHeader([
-                    html.H4([dbc.Button("Description", id="positioned-toast-toggle", color="primary", className="mr-1")],style={"float": "right"}),
+                    # html.H4([dbc.Button("Description", id="positioned-toast-toggle", color="primary", className="mr-1")],style={"float": "right"}),
                     html.H3(["Feature Importances"], className="card-title"),
                     html.H6("Which features had the biggest impact?",className="card-subtitle")]),
                 dbc.CardBody([
@@ -83,27 +156,37 @@ class ImportancesComposite(ExplainerComponent):
             id="positioned-toast",header="Feature Importances",is_open=False,dismissable=True,
             style={"position": "fixed", "top": 25, "right": 10, "width": 400},),
             
-                self.shap_summary.layout()
+                self.shap_summary.layout(),
+                 
+   
                 ],style=dict(marginTop= -20))
-           ])  ])
+           ]) , self.shap_dependence.layout(), ])
 
       ])) ], style=dict(marginTop=25, marginBottom=25) )
 
-    def component_callbacks(self, app):
-        @app.callback(Output("positioned-toast", "is_open"),[Input("positioned-toast-toggle", "n_clicks")],)
-        def open_toast(n):
-            if n:
-                return True
-            return False
+    # def component_callbacks(self, app):
+    #     @app.callback(Output("positioned-toast", "is_open"),[Input("positioned-toast-toggle", "n_clicks")],)
+    #     def open_toast(n):
+    #         if n:
+    #             return True
+    #         return False
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.hide(to_html.title(self.title), hide=self.hide_title)
+        html += to_html.card_rows(
+            [to_html.hide(self.shap_summary.to_html(state_dict, add_header=False), self.hide_importances)]
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
 class ClassifierModelStatsComposite(ExplainerComponent):
-    def __init__(self, explainer, title="Recommendation Performances", name=None,
+    def __init__(self, explainer, title="Obtained Performances", name=None,
                     hide_title=True, hide_selector=True, 
                     hide_globalcutoff=True,
                     hide_modelsummary=False, hide_confusionmatrix=False,
-                    hide_precision=True, hide_classification=True,
-                    hide_rocauc=True, hide_prauc=True,
-                    hide_liftcurve=True, hide_cumprecision=True,hide_range=True,
+                    hide_precision=True, hide_classification=False,
+                    hide_rocauc=False, hide_prauc=True,
+                    hide_liftcurve=True, hide_cumprecision=True,hide_range=False,
 
                     
                     pos_label=None,
@@ -183,11 +266,11 @@ class ClassifierModelStatsComposite(ExplainerComponent):
                 make_hideable(self.confusionmatrix.layout(), hide=self.hide_confusionmatrix),
             ], style=dict(marginBottom=25)),
             dbc.CardDeck([
-                make_hideable(self.precision.layout(), hide=self.hide_precision),
+                make_hideable(self.rocauc.layout(), hide=self.hide_rocauc),
                 make_hideable(self.classification.layout(), hide=self.hide_classification)
             ], style=dict(marginBottom=25)),
             dbc.CardDeck([
-                make_hideable(self.rocauc.layout(), hide=self.hide_rocauc),
+                make_hideable(self.precision.layout(), hide=self.hide_precision),
                 make_hideable(self.prauc.layout(), hide=self.hide_prauc),
             ], style=dict(marginBottom=25)),
             dbc.CardDeck([
@@ -195,6 +278,22 @@ class ClassifierModelStatsComposite(ExplainerComponent):
                 make_hideable(self.cumulative_precision.layout(), self.hide_cumprecision),
             ], style=dict(marginBottom=25)),
         ])
+    
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.hide(to_html.title(self.title), hide=self.hide_title)
+        html += to_html.card_rows(
+            [to_html.hide(self.summary.to_html(state_dict, add_header=False), hide=self.hide_modelsummary),
+             to_html.hide(self.confusionmatrix.to_html(state_dict, add_header=False), hide=self.hide_confusionmatrix)],
+            [to_html.hide(self.precision.to_html(state_dict, add_header=False), hide=self.hide_precision), 
+             to_html.hide(self.prauc.to_html(state_dict, add_header=False), hide=self.hide_prauc)],
+            [to_html.hide(self.rocauc.to_html(state_dict, add_header=False), hide=self.hide_rocauc),
+             to_html.hide(self.classification.to_html(state_dict, add_header=False), hide=self.hide_classification)],
+            [to_html.hide(self.liftcurve.to_html(state_dict, add_header=False), hide=self.hide_liftcurve),
+             to_html.hide(self.cumulative_precision.to_html(state_dict, add_header=False), hide=self.hide_cumprecision)]
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
 
 class RegressionModelStatsComposite(ExplainerComponent):
@@ -260,6 +359,18 @@ class RegressionModelStatsComposite(ExplainerComponent):
                 make_hideable(self.reg_vs_col.layout(), hide=self.hide_regvscol),
             ], style=dict(margin=25))
         ])
+    
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.hide(to_html.title(self.title), hide=self.hide_title)
+        html += to_html.card_rows(
+            [to_html.hide(self.modelsummary.to_html(state_dict, add_header=False), hide=self.hide_modelsummary),
+             to_html.hide(self.preds_vs_actual.to_html(state_dict, add_header=False), hide=self.hide_predsvsactual)],
+            [to_html.hide(self.residuals.to_html(state_dict, add_header=False), hide=self.hide_residuals),
+             to_html.hide(self.reg_vs_col.to_html(state_dict, add_header=False), hide=self.hide_regvscol)],
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
 
 class IndividualPredictionsComposite(ExplainerComponent):
@@ -336,6 +447,20 @@ class IndividualPredictionsComposite(ExplainerComponent):
                     ], md=6),
                 ])
         ], fluid=True)
+    
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.title(self.title)
+        html += to_html.card_rows(
+            [to_html.hide(self.index.to_html(state_dict, add_header=False), self.hide_predindexselector), 
+             to_html.hide(self.summary.to_html(state_dict, add_header=False), self.hide_predictionsummary)],
+            [to_html.hide(self.contributions.to_html(state_dict, add_header=False), self.hide_contributiongraph),
+             to_html.hide(self.pdp.to_html(state_dict, add_header=False), self.hide_pdp)],
+            [to_html.hide(self.contributions_list.to_html(state_dict, add_header=False), self.hide_contributiontable)]
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
+
 
 
 class WhatIfComposite(ExplainerComponent):
@@ -444,7 +569,22 @@ class WhatIfComposite(ExplainerComponent):
                         ], md=6), hide=self.hide_whatifcontributiontable),
                     dbc.Col([self.contribgraph.layout()], style=dict(marginBottom=15), md=6),
                 ])
-        ], fluid=True)
+        ], fluid=True)  
+    
+    def to_html_(self, state_dict=None, add_header=True):
+        html = to_html.title(self.title)
+        html += to_html.card_rows(
+            [to_html.hide(self.index.to_html(state_dict, add_header=False), self.hide_whatifindexselector), 
+             to_html.hide(self.prediction.to_html(state_dict, add_header=False), self.hide_whatifprediction)],
+            [to_html.hide(self.input.to_html(state_dict, add_header=False), self.hide_inputeditor)],
+            [to_html.hide(self.contribgraph.to_html(state_dict, add_header=False), self.hide_whatifcontributiongraph),
+             to_html.hide(self.pdp.to_html(state_dict, add_header=False), self.hide_whatifpdp)],
+            [to_html.hide(self.contribtable.to_html(state_dict, add_header=False), self.hide_whatifcontributiontable)]
+        )
+        html = to_html.div(html)
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
 
 class ShapDependenceComposite(ExplainerComponent):
@@ -488,6 +628,16 @@ class ShapDependenceComposite(ExplainerComponent):
                 make_hideable(self.shap_dependence.layout(), hide=self.hide_shapdependence),
             ], style=dict(marginTop=25)),
         ], fluid=True)
+    
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.title(self.title)
+        html += to_html.card_rows(
+            [to_html.hide(self.shap_summary.to_html(state_dict, add_header=False), self.hide_shapsummary), 
+             to_html.hide(self.shap_dependence.to_html(state_dict, add_header=False), self.hide_shapdependence)],
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
 
 class ShapInteractionsComposite(ExplainerComponent):
@@ -528,6 +678,15 @@ class ShapInteractionsComposite(ExplainerComponent):
                 ], style=dict(marginTop=25))
         ], fluid=True)
 
+    def to_html(self, state_dict=None, add_header=True):
+        html = to_html.title(self.title)
+        html += to_html.card_rows(
+            [to_html.hide(self.interaction_summary.to_html(state_dict, add_header=False), self.hide_interactionsummary), 
+             to_html.hide(self.interaction_dependence.to_html(state_dict, add_header=False), self.hide_interactiondependence)],
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
 
 class DecisionTreesComposite(ExplainerComponent):
     def __init__(self, explainer, title="Decision Path", name=None,
@@ -658,6 +817,17 @@ class DecisionTreesComposite(ExplainerComponent):
         else:
             raise ValueError("explainer is neither a RandomForestExplainer nor an XGBExplainer! "
                             "Pass decision_trees=False to disable the decision tree tab.")
+
+    def to_html_(self, state_dict=None, add_header=True):
+        html = to_html.title(self.title)
+        html += to_html.card_rows(
+            [to_html.hide(self.index.to_html(state_dict, add_header=False), self.hide_treeindexselector)],
+            [to_html.hide(self.trees.to_html(state_dict, add_header=False), self.hide_treesgraph)],
+            [to_html.hide(self.decisionpath_table.to_html(state_dict, add_header=False), self.hide_treepathtable)],
+        )
+        if add_header:
+            return to_html.add_header(html)
+        return html
         
         
 class SuggestedModelComposite(ExplainerComponent):
@@ -711,7 +881,7 @@ class SuggestedModelComposite(ExplainerComponent):
 
     def layout(self):
         
-        ModelDescription=pd.read_pickle(os.path.dirname(__file__) +"/../assets/ModelsDescription.pkl")
+        ModelDescription=pd.read_csv(os.path.dirname(__file__) +"/../assets/ModelsDescription.csv")
         #MD=ModelDescription[(ModelDescription.id== "SVM")]
         MD=ModelDescription[(ModelDescription.Cname== self.explainer.model.__class__.__name__)]
         RecommendedConf=self.explainer.recommended_config[0][1]
@@ -766,6 +936,15 @@ class SuggestedModelComposite(ExplainerComponent):
             ], style=dict(marginTop=25, marginBottom=25)   )
         ])
 
+    def to_html(self, state_dict=None, add_header=True):
+        args = self.get_state_args(state_dict)
+        metrics_df = self.explainer.recommended_config[0][1]
+        html = to_html.table_from_df(metrics_df)
+        html = to_html.card(html, title=self.title+" : "+self.explainer.model.__class__.__name__)
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    
     def component_callbacks(self, app):
         
                 @app.callback(
@@ -786,7 +965,7 @@ class Testcomposite(ExplainerComponent):
     
     def layout(self):
         DataComposite=self.explainer.recommended_config
-        ModelDescription=pd.read_pickle(os.path.dirname(__file__) +"/../assets/ModelsDescription.pkl")
+        ModelDescription=pd.read_csv(os.path.dirname(__file__) +"/../assets/ModelsDescription.csv")
         def make_item(i,md,exp_acc,RecommendedConf,isHidden):
             rows=[]
             table_header = [html.Thead(html.Tr([html.Th("Hyperparameter"), html.Th("Value")]))]
@@ -885,6 +1064,36 @@ class Testcomposite(ExplainerComponent):
                         className="accordion", style={"margin-left":"100px","margin-right":"100px"})
     
 #,html.Br(), make_item(2),html.Br(), make_item(3)
+
+    def to_html(self, state_dict=None, add_header=True):
+        args = self.get_state_args(state_dict)
+        ModelDescription=pd.read_csv(os.path.dirname(__file__) +"/../assets/ModelsDescription.csv")
+        DataComposite=self.explainer.recommended_config
+        for index, item in zip(range(1), DataComposite):
+                RecommendedConf=item[1]
+                name=item[0][1].__class__.__name__
+        RecommendedConf=item[1]
+        metrics_df = RecommendedConf
+        md=ModelDescription[(ModelDescription.Cname== self.explainer.model.__class__.__name__)]
+        
+        html0 = to_html.modelcard("title",md.Cimport.to_list()[0],md.Cname.to_list()[0],md.Conceptual_desc.to_list()[0],md.details.to_list()[0]  )
+        html0 = to_html.card(html0, title=name)
+        
+        txt=pipeline_code(self.explainer.model.__class__.__name__,RecommendedConf,'your dataset path')
+        # txt="from panadas import flkjh"
+        htmlc = to_html.code(txt)
+        htmlc = to_html.card(htmlc, title="Recommend pipeline code")
+        
+        
+        ddd=pd.DataFrame({'Hyperparameter' : RecommendedConf.keys() , 'Value' : RecommendedConf.values() })
+        html1 = to_html.table_from_df(ddd)
+        html1 = to_html.card(html1, title="Recommended model configuration")
+        
+        html=to_html.card_rows([html0,html1],[htmlc])
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    
     def component_callbacks(self, app):
         DataComposite=self.explainer.recommended_config   
         
@@ -1008,3 +1217,515 @@ class RefinementComposite(ExplainerComponent):
               ])   
             ]  )
 
+
+    
+    
+    
+#--------------------------------------------------------------------------------------------------------
+
+class DataProfiling(ExplainerComponent):
+    def __init__(self, explainer, title="Data profiling", name=None,
+                    hide_title=True, hide_selector=True, 
+                    hide_globalcutoff=False,
+                    hide_modelsummary=False, hide_confusionmatrix=False,
+                    hide_precision=False, hide_classification=False,
+                    hide_rocauc=False, hide_prauc=False,
+                    hide_liftcurve=False, hide_cumprecision=False,
+                    pos_label=None,
+                    bin_size=0.1, quantiles=10, cutoff=0.5, **kwargs):
+
+        super().__init__(explainer, title, name)
+
+
+    def layout(self):
+        
+        return html.Div([
+            
+            dbc.Card([
+        dbc.CardHeader(
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Overview", tab_id="Overview"),
+                    dbc.Tab(label="Samples", tab_id="Samples"),
+                    #dbc.Tab(label="Duplicate rows", tab_id="dup_rows"),
+                ],
+                id="card-tabs",
+                card=True,
+                active_tab="Overview",
+            )
+        ),
+        dbc.CardBody(html.P(id="card-content", className="card-text")),
+        ])
+        ]  )
+    
+    
+
+
+
+    def component_callbacks(self, app):
+        def DataOverview (ds):
+            metafeatures = {}
+            #dataset general info
+            n_var = ds.shape[1]
+            n_obs = ds.shape[0]
+            n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
+            n_classes = ds.iloc[:, -1].nunique()
+            dup_rows =len(ds)-len(ds.drop_duplicates())
+            #varibales (data type) infos
+            Numeric = ds.select_dtypes(include='number').shape[1]
+            Categorical = ds.select_dtypes(include='object').shape[1]
+            Boolean = ds.select_dtypes(include='bool').shape[1]
+            Date = ds.select_dtypes(include='datetime64').shape[1]
+            Unsupported = 0            
+            dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
+            varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
+            return dsInfo,varInfo
+
+
+        
+        DataComposite=self.explainer.recommended_config    
+        dsInfo,varInfo = DataOverview(self.explainer.Dataset)
+        
+        @app.callback(Output("card-content", "children"), [Input("card-tabs", "active_tab")])
+
+
+
+
+        def tab_content(active_tab):
+            value=1
+            data = [
+        {
+            'values': [10,30,60],
+            'type': 'pie',
+        },
+    ]
+            
+            
+            ds_info = pd.DataFrame({
+                    " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
+                   "  ": dsInfo,
+                            })
+            
+            
+            vr_type = pd.DataFrame({
+                    " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
+                   "  ": varInfo,
+                
+                            })
+            
+            
+            dfgg = pd.DataFrame(
+    {
+        "First Name": ["Arthur", "Ford", "Momo", "Trillian","Moncef"],
+        "Last Name": ["Dent", "Prefect", "Beeblebrox", "Astra",'GOURANI'],
+    }
+)
+
+            
+            if active_tab=="Overview":
+                return html.Div([
+                    dbc.Row([     
+
+                         dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader([dbc.Form([dbc.FormGroup([
+                       html.H4("Dataset info", className="card-title"),
+                       html.Div([dbc.Badge("Warning", color="warning",className="ml-1")], style={"float": "right"}),
+                       ])  ],inline=True)  ])  ,
+                                
+                            dbc.CardBody([
+                          dbc.Table.from_dataframe(ds_info, striped=True, bordered=True, hover=True),
+                                dcc.Graph(
+            id='graph',
+            figure={ 'data': data ,"layout": {
+                "title": "Classes distribution",
+            "height": 400,  # px
+
+        }, }) 
+                                
+                               
+                                
+                                
+                                        ])])
+                        ]),
+                           
+                        
+             dbc.Col([
+                        dbc.Card([
+                            dbc.CardHeader([html.H4("Data type", className="card-title"),
+                                          ]),
+                            dbc.CardBody([
+                           dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
+                                        ])])
+                        ]),
+                        
+                        
+                        
+              ]), 
+                    
+              
+   
+                       dbc.Row([
+                       
+                       dbc.Col([html.Div([
+                html.H4("Warnings"),
+                 dbc.Alert([
+                "Dataset has ",
+                html.A(dsInfo[4], href="#", className="alert-link"),
+                html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
+                " duplicate rows"
+                ],color="warning",style={"with": "500px"}),
+                    
+                dbc.Alert([
+                "Dataset has ",
+                html.A(dsInfo[3], href="#", className="alert-link"),
+                html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",  className="alert-link"),
+                " missing values"
+                ],color="warning"),
+                
+                            dbc.Alert([
+                "Your ",
+                html.A('unbalanced dataset', href="#", className="alert-link"),
+                " will bias the prediction model towards the more common class!"
+                ],color="warning"),
+                           
+                           
+                           
+                           
+             ],id="warnings")   ],md=6)]) ])
+            
+            
+            if active_tab=="Samples":
+                return dbc.Row([     
+      dbc.Col([ html.Br(),
+                    dbc.Card(
+                        dbc.CardBody([
+                
+                    html.H3("Dataset samples extract"),
+                            # dbc.Table.from_dataframe(self.explainer.Dataset.head(10), striped=True, bordered=True, hover=True),
+                    #dbc.Table(hyper_importance_table_header + hyper_importance_table_body, bordered=False),
+                    #className="p-5"
+                    #self.shap_dependence.layout()
+                ])), html.Br(),
+                ]),])
+
+                    
+             
+            if active_tab=="dup_rows":
+                return dbc.Row([     
+      dbc.Col([ html.Br(),
+                    dbc.Card(
+                        dbc.CardBody([
+                
+                    html.H3("Duplicated rows"),
+                            dbc.Table.from_dataframe(self.explainer.Dataset[self.explainer.Dataset.duplicated()], striped=True, bordered=True, hover=True),
+                    #dbc.Table(hyper_importance_table_header + hyper_importance_table_body, bordered=False),
+                    #className="p-5"
+                    #self.shap_dependence.layout()
+                ])), html.Br(),
+                ]),])
+
+
+            
+            
+            
+
+class Homepage(ExplainerComponent):
+    def __init__(self, explainer,title="Home !", name=None, **kwargs ):
+        super().__init__(explainer, title,name)
+    
+    def component_callbacks(self, app):
+        DataComposite=self.explainer.recommended_config   
+        
+        @app.callback(
+            [Output(f"collapse-1", "is_open"),Output(f"collapse-2", "is_open"),Output(f"collapse-3", "is_open"),
+             Output(f"alert-auto1", "is_open"),Output(f"alert-auto2", "is_open"),Output(f"alert-auto3", "is_open")],
+            [Input(f"group-1-toggle", "n_clicks"),Input(f"group-2-toggle", "n_clicks"),Input(f"group-3-toggle", "n_clicks"),
+             Input(f"example-button1", "n_clicks"),Input(f"example-button2", "n_clicks"),Input(f"example-button3", "n_clicks")],
+            [State(f"collapse-1", "is_open"),State(f"collapse-2", "is_open"),State(f"collapse-3", "is_open"),
+             State("alert-auto1", "is_open"),State("alert-auto2", "is_open"),State("alert-auto3", "is_open")],
+        )
+                
+    
+        def toggle_accordion(n1, n2, n3,n4,n5,n6, is_open1, is_open2, is_open3, is_open4, is_open5, is_open6):
+            
+            ctx = dash.callback_context
+
+            if not ctx.triggered:
+                return False, False, False,False, False, False
+            else:
+                button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+            if button_id == "group-1-toggle" and n1:
+                return not is_open1, False, False,False, False, False
+            elif button_id == "group-2-toggle" and n2:
+                return False, not is_open2, False,False, False, False
+            elif button_id == "group-3-toggle" and n3:
+                return False, False, not is_open3,False, False, False
+            elif button_id == "example-button1" and n4:
+                item=DataComposite[0]
+                generate_pipeline_file(item[0][1].__class__.__name__,item[1],'your dataset path')
+                return  False, False, False,not is_open4,False, False
+            elif button_id == "example-button2" and n5:
+                item=DataComposite[1]
+                generate_pipeline_file(item[0][1].__class__.__name__,item[1],'your dataset path')
+                return False, False, False,False,not is_open5,False
+            elif button_id == "example-button3" and n6:
+                item=DataComposite[2]
+                generate_pipeline_file(item[0][1].__class__.__name__,item[1],'your dataset path')
+                return False, False,False, False, False, not is_open6
+        return False, False, False,False, False, False
+            
+            #--------------------------------------------------------------------------------------------------------
+
+            
+            
+class DataProfilingmed(ExplainerComponent):
+    def __init__(self, explainer, title="Provided Data", name=None, **kwargs):
+
+        super().__init__(explainer, title, name)
+        self.scatter = ScatterComponent(explainer, name=self.name+"1", **kwargs)
+        self.samples = SamplesComponent(explainer, name=self.name+"2", **kwargs)
+        self.missingVal = MissComponent(explainer, name=self.name+"3", **kwargs)
+        self.duplicatedRows = duplicatedComponent(explainer, name=self.name+"4", **kwargs)
+        self.overview = OverviewComponent(explainer, name=self.name+"5", **kwargs)
+
+    def layout(self):
+        tabs=[
+                dbc.Tab(label="Overview", tab_id="Overview"),
+                dbc.Tab(label="Samples", tab_id="Samples"),
+            ]
+        
+        if self.explainer.Dataset.isnull().sum().sum() + self.explainer.Dataset.isna().sum().sum() >0:
+            tabs.append(dbc.Tab(label="Missing values", tab_id="miss_vals"))
+        if len(self.explainer.Dataset) -len(self.explainer.Dataset.drop_duplicates()) >0:
+            tabs.append(dbc.Tab(label="Duplicate rows", tab_id="dup_rows"))                   
+                    
+        tabs.append(dbc.Tab(label="Data Correlation", tab_id="data_corr"))
+        
+        
+        return html.Div([
+            
+            dbc.Card([
+        dbc.CardHeader(
+            dbc.Tabs(
+                tabs,
+                id="card-tabs",
+                card=True,
+                active_tab="Overview",
+            )
+        ),
+        dbc.CardBody(html.P(id="card-content", className="card-text")),
+        ])
+        ]  )
+    
+    def component_callbacks(self, app):
+#         def DataOverview (ds):
+#             #dataset general info
+#             n_var = ds.shape[1]
+#             n_obs = ds.shape[0]
+#             n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
+#             n_classes = ds.iloc[:, -1].nunique()
+#             dup_rows =len(ds)-len(ds.drop_duplicates())
+#             #varibales (data type) infos
+#             Numeric = ds.select_dtypes(include='number').shape[1]
+#             Categorical = ds.select_dtypes(include='object').shape[1]
+#             Boolean = ds.select_dtypes(include='bool').shape[1]
+#             Date = ds.select_dtypes(include='datetime64').shape[1]
+#             Unsupported = 0            
+#             global dsInfo, varInfo # les variable dsInfo et varInfo sont utilisé pour les informations du dataframe 
+#             dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
+#             varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
+#             return dsInfo,varInfo
+
+
+        
+#         dsInfo,varInfo = DataOverview(self.explainer.Dataset)
+        
+        @app.callback(Output("card-content", "children"), [Input("card-tabs", "active_tab")])
+
+
+
+
+        def tab_content(active_tab):
+
+#             data = [{
+#             'values': [10,30,60],
+#             'type': 'pie'}]
+            
+            
+#             ds_info = pd.DataFrame({
+#                     " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
+#                    "  ": dsInfo,})
+            
+            
+#             vr_type = pd.DataFrame({
+#                     " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
+#                    "  ": varInfo,})
+            
+
+            
+            # if active_tab=="Overview":
+#                 return html.Div([
+#                     dbc.Row([     
+
+#                          dbc.Col([
+#                                 dbc.Card([
+#                                     dbc.CardHeader([
+
+#                                                 html.H4("Dataset info", className="card-title"),
+#                                                 html.Div([dbc.Badge("Warning", color="warning",className="ml-1")], style={"float": "right"}),
+
+#                                         ])  ,
+#                                     #tableau pour les info du dataset
+#                                     dbc.CardBody([
+#                                         dbc.Table.from_dataframe(ds_info, striped=True, bordered=True, hover=True,id='table'),
+
+#                                         #graphique de distribution des classe
+#                                         dcc.Graph(
+#                                             id='graph',
+#                                             figure={ 'data': data ,"layout": {"title": "Classes distribution","height": 400,  # px
+#                                             }, }
+#                                         #    }, }
+#                                         ), 
+
+#                                             ],id='card')
+#                                     ])
+#                                 ]),
+                           
+                        
+#             dbc.Col([
+#                                 dbc.Card([
+#                                     dbc.CardHeader([html.H4("Data type", className="card-title"),
+#                                                     ]),
+#                                     dbc.CardBody([#tableau pour le type des colonnes
+#                                     dbc.Table.from_dataframe(vr_type, striped=True, bordered=True, hover=True),
+                                                
+                                       
+#                                         html.Div([#les différent warning
+#                                     html.H4("Warnings"),
+#                                     dbc.Alert([
+#                                         "Dataset has ",
+#                         html.A(dsInfo[4], href="#", className="alert-link"),
+#                         html.A("("+str(round((dsInfo[4]*100)/dsInfo[1],2))+")%",  className="alert-link"),
+#                         " duplicate rows ",
+#                          html.Button('Drop dupplicate rows', id='submit-dupl', n_clicks=0, className="btn btn-outline-warning", style={"float": "right"}), 
+#                         dcc.Download(id="download-dupl"),],color="warning",style={"with": "500px"}),
+
+
+#                         dbc.Alert([
+#                         "Dataset has ",
+#                         html.A(dsInfo[3], href="#", className="alert-link"),
+#                         html.A("("+str(round((dsInfo[3]*100)/(dsInfo[0]*dsInfo[1]),2))+")%",),
+#                         " missing values ",
+#                         #html.Button('Compléter les valeurs manquantes', id='submit-val', n_clicks=0, className="btn btn-outline-warning"), 
+#                             #dcc.Download(id="download-text")
+#                             ], id="alert-auto",color="info",is_open=True, duration=1000), 
+
+#                                     dbc.Alert([
+#                         "Your ",
+#                         html.A('unbalanced dataset', href="#", className="alert-link"),
+#                         " will bias the prediction model towards the more common class!"
+#                         ],color="warning",is_open=True, duration=1000),
+
+#                         ],id="warnings") ])])
+#                                 ]), 
+                        
+                        
+#               ]),  ])
+    
+    
+    #------------------------------------------------------------------------------------------------------------------
+            # classe= bf.iloc[:,-1].unique()
+            if active_tab=="Overview":
+                return html.Div([dbc.Row([dbc.Col([ self.overview.layout() ]) ])])
+            
+    #------------------------------------------------------------------------------------------------------------------
+            # classe= bf.iloc[:,-1].unique()
+            if active_tab=="Samples":
+                return html.Div([dbc.Row([dbc.Col([ self.samples.layout() ]) ])])
+
+                    
+   #------------------------------------------------------------------------------------------------------------------          
+            if active_tab=="data_corr":
+                return html.Div([dbc.Row([dbc.Col([ self.scatter.layout() ]) ])])
+        
+   #------------------------------------------------------------------------------------------------------------------          
+            if active_tab=="miss_vals":
+                return html.Div([dbc.Row([dbc.Col([ self.missingVal.layout() ]) ])])        
+        
+    #------------------------------------------------------------------------------------------------------------------          
+            if active_tab=="dup_rows":
+                return html.Div([dbc.Row([dbc.Col([ self.duplicatedRows.layout() ]) ])])        
+        
+    #--------------------------------------------------------------------------------------------------------
+    def to_html(self, state_dict=None, add_header=True):
+        ds=self.explainer.Dataset
+        n_var = ds.shape[1]
+        n_obs = ds.shape[0]
+        n_missing = ds.isnull().sum().sum() + ds.isna().sum().sum()
+        n_classes = ds.iloc[:, -1].nunique()
+        dup_rows =len(ds)-len(ds.drop_duplicates())
+        #varibales (data type) infos
+        Numeric = ds.select_dtypes(include='number').shape[1]
+        Categorical = ds.select_dtypes(include='object').shape[1]
+        Boolean = ds.select_dtypes(include='bool').shape[1]
+        Date = ds.select_dtypes(include='datetime64').shape[1]
+        Unsupported = 0            
+        dsInfo=[n_var, n_obs, n_classes,n_missing,  dup_rows]
+        varInfo=[Numeric, Categorical, Boolean, Date, Unsupported]
+        ds_info = pd.DataFrame({
+                    " ": ["Number of variables", "Number of observations","Number of classes", "Missing cells", "Duplicate rows"],
+                   "  ": dsInfo,})
+            
+            
+        vr_type = pd.DataFrame({
+                    " ": ["Numeric", "Categorical", "Boolean", "Date", "Unsupported"],
+                   "  ": varInfo,})    
+
+ 
+        
+        
+        html0 = to_html.table_from_df(ds_info)
+        html0 = to_html.card(html0, title="Dataset info")
+        
+        html1 = to_html.table_from_df(vr_type)
+        html1 = to_html.card(html1, title="Data type")
+        
+        html2 = to_html.hide(self.scatter.to_html(), False)
+        html2 = to_html.card(html2, title="Data correlation")
+        
+        html=to_html.card_rows([html0,html1],[html2])
+        
+        if add_header:
+            return to_html.add_header(html)
+        return html
+    
+    
+    
+class ExportDash(ExplainerComponent):
+    def __init__(self, explainer, title="Data profiling med", name=None,
+                    hide_title=True, hide_selector=True, 
+                    hide_globalcutoff=False,
+                    hide_modelsummary=False, hide_confusionmatrix=False,
+                    hide_precision=False, hide_classification=False,
+                    hide_rocauc=False, hide_prauc=False,
+                    hide_liftcurve=False, hide_cumprecision=False,
+                    pos_label=None,
+                    bin_size=0.1, quantiles=10, cutoff=0.5, **kwargs):
+
+        super().__init__(explainer, title, name)
+
+
+    def layout(self):
+        
+        return dbc.DropdownMenu(
+            children=[
+                dbc.DropdownMenuItem("More pages", header=True),
+                dbc.DropdownMenuItem("Page 2", href="#"),
+                dbc.DropdownMenuItem("Page 3", href="#"),
+            ],
+            nav=True,
+            in_navbar=True,
+            label="More",
+        ),

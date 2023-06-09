@@ -418,7 +418,10 @@ class ExplainerDashboard:
                 print("The explainer object has no decision_trees property. so "
                         "setting decision_trees=False...", flush=True)
                 decision_trees = False
-        
+
+            # Comment the following to remove the drag an drop page
+            tabs.append(ImportComposite)
+
             if importances:
                 tabs.append(ImportancesComposite)
             if model_summary:

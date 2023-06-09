@@ -29,7 +29,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
-from flask import Flask
+from flask import Flask, appcontext_popped
 from flask_simplelogin import SimpleLogin, login_required
 from werkzeug.security import check_password_hash, generate_password_hash
 from jupyter_dash import JupyterDash
@@ -140,7 +140,10 @@ class ExplainerTabsLayout(ExplainerComponent):
             
             
         self.connector = PosLabelConnector(self.selector, self.tabs)
-   
+         ##-------------------
+        self.documentation_page = DocumentationComposite(explainer, name=self.name+"0",
+                    **update_params(kwargs , hide_cats=True,hide_title=True))
+         ##---------------
     def layout(self):
         """returns a multitab layout plus ExplainerHeader"""
         return dbc.Container([
@@ -152,6 +155,7 @@ class ExplainerTabsLayout(ExplainerComponent):
                                  style={ "margin-left": "10px"}),
                         dbc.Tooltip(self.description, target='dashboard-title')
                     ], md=6), hide=True),
+
                 make_hideable(
                     dbc.Col([
                          html.Br(),
@@ -159,17 +163,15 @@ class ExplainerTabsLayout(ExplainerComponent):
                     ],md=6), hide=True),
             ], justify="start", style=dict(marginBottom=10)),
             
-            
-            
-            
-                            make_hideable(
+    
+                make_hideable(
                     dbc.Col([
                         html.Div([
                             # dbc.Button('&#xf556', id="download-button-all"+self.name, n_clicks=None, size="sm"),
                             html.Button(id="download-button-all"+self.name, n_clicks=None, style={"border": "none","border-radius": "30px","width":"38px","height":"38px","back-ground-color":"red","background-image": "url(./assets/share_.png)"}),
                             dbc.Tooltip(f"Export the dashboard as a dynamique HTML report",target="download-button-all",placement="left",
-                                    style={"width":"300px"}),
-                            dcc.Download('download-page-'+self.name),
+                                    style={"width":"300px"}),  
+                             dcc.Download('download-page-'+self.name),
                             # dbc.DropdownMenu([
                             #         dbc.DropdownMenuItem("All tabs", id="download-button-all"+self.name, n_clicks=None), 
                             #         dbc.DropdownMenuItem(divider=True), 
@@ -178,16 +180,42 @@ class ExplainerTabsLayout(ExplainerComponent):
                             #     ], label="Export Dash", color="link", right=True),
                         ], style={"float": "right","position": "fixed", "zIndex":100 ,"top":100,"right":0, "bottom": 0, "font-weight": 400})
                     ], md="auto", className="ml-auto", align="center"), hide=False),
-            
-
-            
-            
+            ##-------------------------
+                make_hideable(
+                    dbc.Col([
+                        html.Div([
+                            ##-----documentation button---------------------------
+                             html.Button(id="open-body-scroll"+self.name, n_clicks=None, style={"border": "none","border-radius": "30px","width":"50px","height":"50px","back-ground-color":"red","background-image": "url(./assets/documentation-button.png)"}),
+                            dbc.Tooltip(f"Documentation",target="open-body-scroll",placement="left",
+                                    style={"width":"300px"}),
+                            dbc.Modal(
+                                            [
+                                  
+                                                dbc.ModalBody(self.documentation_page.layout()),
+                                                dbc.ModalFooter(
+                                                    dbc.Button(
+                                                        "Close",
+                                                        id="close-body-scroll",
+                                                        className="ms-auto",
+                                                        n_clicks=0,
+                                                    )
+                                                ),
+                                            ],
+                                            id="modal-body-scroll",
+                                            scrollable=True,
+                                             size="lg",
+                                            is_open=False,
+                                        ),
+                        ], style={"float": "left","position": "fixed", "zIndex":100 ,"bottom":100,"right":0, "bottom": 0, "font-weight": 400})
+                    ], md="auto", className="ml-auto", align="center"), hide=False),
+            ##----------------------------
             
             dcc.Tabs(id="tabs", value=self.tabs[0].name, 
                         children=[dcc.Tab(label=tab.title, id=tab.name, value=tab.name,
                                         children=tab.layout()) for tab in self.tabs]),
         ], fluid=self.fluid)
     
+
     def to_html(self, state_dict=None, add_header=True):
         html = to_html.title(self.title)
         tabs = {tab.title: tab.to_html(state_dict, add_header=False) for tab in self.tabs}
@@ -196,7 +224,6 @@ class ExplainerTabsLayout(ExplainerComponent):
         if add_header:
             return to_html.add_header(html)
         return html
-
     def register_callbacks(self, app):
         """Registers callbacks for all tabs"""
         for tab in self.tabs:
@@ -218,6 +245,22 @@ class ExplainerTabsLayout(ExplainerComponent):
              # *[Input("download-button-"+tab.name, 'n_clicks') for tab in self.downloadable_tabs]],
             [State(id_, prop_) for id_, prop_ in self.get_state_tuples()]
         )
+             ##-------------------------
+        def toggle_modal(n1, n2, is_open):
+            if n1 or n2:
+               return not is_open
+            return is_open
+        
+        app.callback(
+        Output("modal-body-scroll", "is_open"),
+        [
+            Input("open-body-scroll", "n_clicks"),
+            Input("close-body-scroll", "n_clicks"),
+        ],
+        [State("modal-body-scroll", "is_open")],
+        )(toggle_modal)
+     
+    ##-----------------
         
         def download_html(*args):
             state_dict = dict(zip(self.get_state_tuples(), args[1+len(self.downloadable_tabs):]))
@@ -238,7 +281,7 @@ class ExplainerTabsLayout(ExplainerComponent):
             raise PreventUpdate
 
             
-
+  
             
     def calculate_dependencies(self):
         """Calculates dependencies for all tabs"""
@@ -548,6 +591,7 @@ class ExplainerDashboard:
                 tabs.append(DecisionTreesComposite)
             
             tabs.append(RefinementComposite)
+            tabs.append(DocumentationComposite)
             
 
         if isinstance(tabs, list) and len(tabs)==1:
@@ -562,7 +606,7 @@ class ExplainerDashboard:
                             header_hide_selector=self.header_hide_selector, 
                             block_selector_callbacks=self.block_selector_callbacks,
                             pos_label=self.pos_label,
-                            fluid=fluid))
+                            fluid=self.fluid))
         else:
             tabs = self._convert_str_tabs(tabs)
             self.explainer_layout = ExplainerPageLayout(explainer, tabs, title,
