@@ -149,22 +149,6 @@ Demonstration of the explanatory artifact:
 
 If you use the AMLBID in a scientific publication, please consider citing at least one of the following papers:
 
-* **M. Garouani, A. Ahmad, M. Bouneffa, M. Hamlich, AMLBID: An auto-explained automated machine learning tool for big industrial data, SoftwareX 17 (2022) 100919. Doi: https://doi.org/10.1016/j.softx.2021.100919**
-
-```bibtex
-@article{Garouani2022,
-  doi = {10.1016/j.softx.2021.100919},
-  url = {https://doi.org/10.1016/j.softx.2021.100919},
-  year = {2022},
-  month = jan,
-  publisher = {Elsevier {BV}},
-  volume = {17},
-  pages = {100919},
-  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich},
-  title = {{AMLBID}: An auto-explained Automated Machine Learning tool for Big Industrial Data},
-  journal = {{SoftwareX}}
-}
-```
 
 * **Garouani, M., Ahmad, A., Bouneffa, M. et al. Towards big industrial data mining through explainable automated machine learning. Int J Adv Manuf Technol 120, 1169–1188 (2022). https://doi.org/10.1007/s00170-022-08761-9**
 
@@ -202,6 +186,174 @@ If you use the AMLBID in a scientific publication, please consider citing at lea
 }
 
 ```
+
+* **Garouani, M., Ahmad, A., Bouneffa, M. et al. Autoencoder-kNN meta-model based data characterization approach for an automated selection of AI algorithms. J Big Data 10, 14 (2023). https://doi.org/10.1186/s40537-023-00687-7**
+
+```bibtex
+@article{Garouani2023_jbd,
+  doi = {10.1186/s40537-023-00687-7},
+  url = {https://doi.org/10.1186/s40537-023-00687-7},
+  year = {2023},
+  month = feb,
+  publisher = {Springer Science and Business Media {LLC}},
+  volume = {10},
+  number = {14},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich},
+  title = {Autoencoder-kNN meta-model based data characterization approach for an automated selection of AI algorithms},
+  journal = {Journal of Big Data}
+}
+
+```
+
+* **M. Garouani, A. Ahmad, M. Bouneffa, M. Hamlich, AMLBID: An auto-explained automated machine learning tool for big industrial data, SoftwareX 17 (2022) 100919. Doi: https://doi.org/10.1016/j.softx.2021.100919**
+
+```bibtex
+@article{Garouani2022,
+  doi = {10.1016/j.softx.2021.100919},
+  url = {https://doi.org/10.1016/j.softx.2021.100919},
+  year = {2022},
+  month = jan,
+  publisher = {Elsevier {BV}},
+  volume = {17},
+  pages = {100919},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich},
+  title = {{AMLBID}: An auto-explained Automated Machine Learning tool for Big Industrial Data},
+  journal = {{SoftwareX}}
+}
+```
+
+* **M. Garouani, A. Ahmad, M. Bouneffa, M. Hamlich, AMLBID 2.0: An auto-explained Automated Machine Learning tool for Big Industrial Data, SoftwareX 23 (2023) 100919. Doi: https://doi.org/10.1016/j.softx.2023.101444**
+
+```bibtex
+@article{Garouani2023_softx,
+  doi = {10.1016/j.softx.2023.101444},
+  title = {Version [2.0]- [AMLBID: An auto-explained Automated Machine Learning tool for Big Industrial Data]},
+  journal = {SoftwareX},
+  volume = {23},
+  pages = {101444},
+  year = {2023},
+  issn = {2352-7110},
+  author = {Moncef Garouani and Mourad Bouneffa and Adeel Ahmad and Mohamed Hamlich},
+}
+```
+
+* **Garouani, M., Bouneffa, M. Automated machine learning hyperparameters tuning through meta-guided Bayesian optimization. Prog Artif Intell (2024). https://doi.org/10.1007/s13748-023-00311-y**
+
+```bibtex
+@article{Garouani2024_pai,
+author = {Garouani, Moncef and Bouneffa, Mourad},
+ doi = {10.1007/s13748-023-00311-y},
+ issn = {2192-6360},
+ journal = {Progress in Artificial Intelligence},
+ month = {January},
+ title = {Automated machine learning hyperparameters tuning through meta-guided Bayesian optimization},
+ year = {2024}
+}
+```
+
+
+* **Garouani, M., Bouneffa, M. (2023). Unlocking the Black Box: Towards Interactive Explainable Automated Machine Learning. In: Intelligent Data Engineering and Automated Learning – IDEAL 2023. IDEAL 2023. Lecture Notes in Computer Science, vol 14404. Springer, Cham. https://doi.org/10.1007/978-3-031-48232-8_42**
+
+```bibtex
+@InProceedings{garouani_IDEAL23,
+author={Moncef Garouani and Mourad Bouneffa}
+title={Unlocking the Black Box: Towards Interactive Explainable Automated Machine Learning},
+booktitle={Intelligent Data Engineering and Automated Learning -- IDEAL 2023},
+year={2023},
+publisher={Springer Nature Switzerland},
+pages={458--469},
+doi={10.1007/978-3-031-48232-8_42},
+isbn={978-3-031-48232-8}
+}
+
+```
+
+
+* **Garouani, M., Ahmad, A., Bouneffa, M., Hamlich, M. (2022). Scalable Meta-Bayesian Based Hyperparameters Optimization for Machine Learning. In: Smart Applications and Data Analysis. SADASC 2022. Communications in Computer and Information Science, vol 1677. Springer, Cham. https://doi.org/10.1007/978-3-031-20490-6_14**
+
+```bibtex
+@inproceedings{GarouaniSADASC,
+  doi = {10.1007/978-3-031-20490-6_14},
+  year = {2022},
+  publisher="Springer International Publishing",
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich},
+  title = {Scalable Meta-Bayesian Based Hyperparameters Optimization for Machine Learning},
+  booktitle = {Smart Applications and Data Analysis}
+}
+
+```
+
+
+* **Chaabi, M., Hamlich, M., Garouani, M. (2023). Evaluation of AutoML Tools for Manufacturing Applications. In: Azrar, L., et al. Advances in Integrated Design and Production II. CIP 2022. Lecture Notes in Mechanical Engineering. Springer, Cham. https://doi.org/10.1007/978-3-031-23615-0_33**
+
+```bibtex
+@InProceedings{10.1007/978-3-031-23615-0_33,
+author="Chaabi, Meryem
+and Hamlich, Mohamed
+and Garouani, Moncef",
+title="Evaluation of AutoML Tools for Manufacturing Applications",
+booktitle="Advances in Integrated Design and Production II",
+year="2023",
+publisher="Springer International Publishing",
+address="Cham",
+pages="323--330",
+isbn="978-3-031-23615-0"
+}
+
+
+```
+
+
+
+* **Garouani, M.; Ahmad, A. and Bouneffa, M. (2023). Explaining Meta-Features Importance in Meta-Learning Through Shapley Values. In Proceedings of the 25th International Conference on Enterprise Information Systems - Volume 1: ICEIS; ISBN 978-989-758-648-4; ISSN 2184-4992, SciTePress, pages 591-598. DOI: 10.5220/0011986600003467**
+
+```bibtex
+@inproceedings{garouani_iceis23,
+author={Moncef Garouani and Adeel Ahmad and Mourad Bouneffa.},
+title={Explaining Meta-Features Importance in Meta-Learning Through Shapley Values},
+booktitle={Proceedings of the 25th International Conference on Enterprise Information Systems - Volume 1: ICEIS,},
+year={2023},
+pages={591-598},
+publisher={SciTePress},
+organization={INSTICC},
+doi={10.5220/0011986600003467},
+isbn={978-989-758-648-4},
+issn={2184-4992},
+}}
+
+```
+
+* **Garouani, M., Ahmad, A., Bouneffa, M., Hamlich, M., Bourguin, G., Lewandowski, A. (2022). Towards Meta-Learning Based Data Analytics to Better Assist the Domain Experts in Industry 4.0. In: Artificial Intelligence in Data and Big Data Processing. ICABDE 2021. Lecture Notes on Data Engineering and Communications Technologies, vol 124. Springer, Cham. https://doi.org/10.1007/978-3-030-97610-1_22**
+
+```bibtex
+@incollection{Garouani2022,
+  doi = {10.1007/978-3-030-97610-1_22},
+  url = {https://doi.org/10.1007/978-3-030-97610-1_22},
+  year = {2022},
+  publisher = {Springer International Publishing},
+  pages = {265--277},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich and Gregory Bourguin and Arnaud Lewandowski},
+  title = {Towards Meta-Learning Based Data Analytics to~Better Assist the~Domain Experts in~Industry 4.0},
+  booktitle = {Artificial Intelligence in Data and Big Data Processing}
+}
+
+```
+
+* **Garouani, M., Ahmad, A., Bouneffa, M., Hamlich, M., Bourguin, G., Lewandowski, A. (2022). Towards Meta-Learning Based Data Analytics to Better Assist the Domain Experts in Industry 4.0. In: Artificial Intelligence in Data and Big Data Processing. ICABDE 2021. Lecture Notes on Data Engineering and Communications Technologies, vol 124. Springer, Cham. https://doi.org/10.1007/978-3-030-97610-1_22**
+
+```bibtex
+@incollection{Garouani2022,
+  doi = {10.1007/978-3-030-97610-1_22},
+  url = {https://doi.org/10.1007/978-3-030-97610-1_22},
+  year = {2022},
+  publisher = {Springer International Publishing},
+  pages = {265--277},
+  author = {Moncef Garouani and Adeel Ahmad and Mourad Bouneffa and Mohamed Hamlich and Gregory Bourguin and Arnaud Lewandowski},
+  title = {Towards Meta-Learning Based Data Analytics to~Better Assist the~Domain Experts in~Industry 4.0},
+  booktitle = {Artificial Intelligence in Data and Big Data Processing}
+}
+```
+
 
 * **Garouani, M.; Ahmad, A.; Bouneffa, M.; Lewandowski, A.; Bourguin, G. and Hamlich, M. (2021). Towards the Automation of Industrial Data Science: A Meta-learning based Approach. In Proceedings of the 23rd International Conference on Enterprise Information Systems - Volume 1: ICEIS, 709-716. https://doi.org/10.5220/0010457107090716**
 
