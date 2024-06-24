@@ -371,4 +371,4 @@ issn={2184-4992},
 ```
 
 
-**AMLBID** was developed in the [IRIT Lab]([https://www.irit.fr/]), [LISIC Lab](https://www-lisic.univ-littoral.fr/) with funding from the [ULCO](https://www.univ-littoral.fr/), [HESTIM](https://www.hestim.ma/), and [CNRST](https://cnrst.ma/index.php/fr/).
+**AMLBID** was developed in the [IRIT Lab](https://www.irit.fr/], [LISIC Lab](https://www-lisic.univ-littoral.fr/) with funding from the [ULCO](https://www.univ-littoral.fr/), [HESTIM](https://www.hestim.ma/), and [CNRST](https://cnrst.ma/index.php/fr/).
